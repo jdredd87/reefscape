@@ -13,6 +13,29 @@ function img(name as string) as string
     return "pkg:/images/ocean/" + name + ".png"
 end function
 
+' Set a poster's image. 720p Rokus draw the whole scene at 2/3 size, so there large images are
+' decoded at that size: less than half the texture memory and no visible difference.
+' loadWidth/loadHeight are given in the app's 1080p units and Roku converts them to 720p itself,
+' so the image's own size is passed. The poster keeps that size, so the layout is unchanged.
+sub setImg(p as object, name as string)
+    if m.hdLoad = invalid then
+        ui = CreateObject("roDeviceInfo").GetUIResolution()
+        m.hdLoad = (ui <> invalid and ui.height <> invalid and ui.height <= 720)
+        if m.hdLoad then m.imgSizes = imageSizes()
+    end if
+    if m.hdLoad then
+        sz = m.imgSizes[name]
+        if sz <> invalid and sz[0] * sz[1] >= 20000 then
+            if p.width = 0 then p.width = sz[0]
+            if p.height = 0 then p.height = sz[1]
+            p.loadDisplayMode = "scaleToFit"
+            p.loadWidth = sz[0]
+            p.loadHeight = sz[1]
+        end if
+    end if
+    p.uri = img(name)
+end sub
+
 function hex2(v as float) as string
     h = "0123456789ABCDEF"
     n = Int(v)

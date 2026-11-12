@@ -44,7 +44,7 @@ function getSpecs() as object
             { id: "bell", uri: "jelly_bell", w: 200, x: 0, y: 0, px: 100, py: 110, anim: "scale", samp: [0.1, -0.13], period: 2.6 }
         ] }
         whale: { cx: 650, cy: 220, minX: 0, maxX: 1300, scale: 1.7, speed: 55, bob: 25, sway: 0.015, swayPeriod: 9, parts: [
-            { id: "body", uri: "whale", w: 1300, x: 0, y: 0, up: 2 }
+            { id: "body", uri: "whale", w: 1300, h: 430, x: 0, y: 0 }
         ] }
         lionfish: { cx: 140, cy: 110, minX: -34, maxX: 280, scale: 0.8, speed: 45, bob: 20, parts: [
             { id: "tail", uri: "lion_tail", w: 80, x: -34, y: 75, px: 78, py: 45, anim: "rot", amp: 0.18, period: 0.9 }

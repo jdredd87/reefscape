@@ -26,8 +26,12 @@ if ($Action -eq "log") {
     $text
 }
 elseif ($Action -eq "shot") {
-    curl.exe -s --user "rokudev:$Password" --digest -F "mysubmit=Screenshot" "http://$RokuIP/plugin_inspect" | Out-Null
-    curl.exe -s --user "rokudev:$Password" --digest -o $Out "http://$RokuIP/pkgs/dev.jpg"
+    $page = curl.exe -s --user "rokudev:$Password" --digest -F "mysubmit=Screenshot" "http://$RokuIP/plugin_inspect"
+    # most Rokus save dev.jpg, some TVs dev.png
+    $ext = "jpg"
+    if (($page -join "`n") -match 'pkgs/dev\.(\w+)') { $ext = $Matches[1] }
+    $Out = [IO.Path]::ChangeExtension($Out, $ext)
+    curl.exe -s --user "rokudev:$Password" --digest -o $Out "http://$RokuIP/pkgs/dev.$ext"
     Get-Item $Out | Select-Object Name, Length
 }
 elseif ($Action -eq "quit") {

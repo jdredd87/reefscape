@@ -22,6 +22,10 @@ sub init()
     m.tierForced = false
     m.forceSpawn = false
     m.tier = detectTier()
+    ' the big background images are set here rather than in the XML (see setImg)
+    for each bgImg in [["reefFar", "reef_far"], ["reefMid", "reef_mid"], ["sand", "sand"], ["sandFront", "sand_front"], ["warmTint", "warm_grad"], ["vignette", "vignette"]]
+        setImg(m.top.FindNode(bgImg[0]), bgImg[1])
+    end for
 
     buildLight()
     buildDecor()
@@ -59,6 +63,9 @@ function detectTier() as integer
     if pre = "27" or pre = "28" or pre = "29" or pre = "35" or pre = "36" or pre = "37" then return 0
     ' Roku Express and Streaming Stick families
     if pre = "38" or pre = "39" then return 1
+    ' TVs and players whose menus run at 720p are the lower-powered ones
+    ui = di.GetUIResolution()
+    if ui <> invalid and ui.height <> invalid and ui.height <= 720 then return 1
     return 2
 end function
 
@@ -125,7 +132,7 @@ sub updateFps(now as float)
         print "fps "; Int(fps); ", quality "; m.tier
         ' the probe tops out near 30 on a healthy Roku (updates arrive at most every other frame);
         ' a busy one falls well below that
-        if fps < 24 and m.tier > 0 and not m.tierForced then
+        if fps < 26 and m.tier > 0 and not m.tierForced then
             ' two low readings in a row: step down
             m.fpsLow = m.fpsLow + 1
             if m.fpsLow >= 2 then
@@ -137,6 +144,8 @@ sub updateFps(now as float)
             m.fpsLow = 0
             m.fpsAt = now + 180000
         end if
+        ' forced quality (testing): keep measuring
+        if m.tierForced then m.fpsAt = now + 5000
     end if
 end sub
 
@@ -169,8 +178,10 @@ sub buildLight()
     surf.translation = [-200, -24]
     for i = 0 to 2
         p = surf.CreateChild("Poster")
-        p.uri = img("surface")
-        p.scale = [2, 2]
+        setImg(p, "surface")
+        ' stored at half size; an explicit size (not scale) draws correctly on every Roku
+        p.width = 2048
+        p.height = 320
         p.translation = [i * 2048, 0]
     end for
     anim = m.top.CreateChild("Animation")
@@ -188,7 +199,7 @@ sub buildLight()
     for i = 0 to xs.Count() - 1
         p = rays.CreateChild("Poster")
         p.id = "ray" + i.ToStr()
-        p.uri = img("ray")
+        setImg(p, "ray")
         p.translation = [xs[i] + rnd(-60, 60), -60]
         ' ray.png is stored at half size, so scale it 2x
         p.scaleRotateCenter = [100, 0]
@@ -211,7 +222,7 @@ sub buildCaustics()
         lg.scale = [1, 0.9]
         for k = 0 to 3
             p = lg.CreateChild("Poster")
-            p.uri = img(L[0])
+            setImg(p, L[0])
             p.translation = [k * 1024, 0]
         end for
         anim = m.top.CreateChild("Animation")
@@ -264,7 +275,7 @@ sub addDecor(parent as object, items as object, tint as string, scl as float)
         it = items[i]
         p = parent.CreateChild("Poster")
         p.id = parent.id + i.ToStr()
-        p.uri = img(it.uri)
+        setImg(p, it.uri)
         p.translation = [it.x, it.y]
         if tint <> "" then p.blendColor = tint
         if it.px <> invalid then p.scaleRotateCenter = [it.px, it.py]
@@ -285,7 +296,7 @@ sub buildBubbles()
             b.id = "bub" + n.ToStr()
             n = n + 1
             sz = rnd(10, 30)
-            b.uri = img("bubble")
+            setImg(b, "bubble")
             b.scale = [sz / 64, sz / 64]
             b.opacity = rnd(0.5, 0.9)
             anim = m.top.CreateChild("Animation")
@@ -323,7 +334,7 @@ sub buildParticles()
     for i = 0 to 44
         p = g.CreateChild("Poster")
         p.id = "pt" + i.ToStr()
-        p.uri = img("particle")
+        setImg(p, "particle")
         sz = rnd(3, 11)
         p.scale = [sz / 32, sz / 32]
         p.opacity = rnd(0.15, 0.5)
@@ -349,17 +360,17 @@ sub buildEel()
     head.scaleRotateCenter = [255, 78]
     jaw = head.CreateChild("Poster")
     jaw.id = "eelJaw"
-    jaw.uri = img("eel_jaw")
+    setImg(jaw, "eel_jaw")
     jaw.translation = [0, 64]
     jaw.scaleRotateCenter = [90, 8]
     body = head.CreateChild("Poster")
-    body.uri = img("eel")
+    setImg(body, "eel")
 
     ' the cave mouth in the rock poster: rock at [1420,605] scaled 1.3, cave centre local [120,172] -> screen [1576,829], 150 x 114
     ' nothing right of x=1612 (deep inside the hole) is drawn, so the eel never paints over the rock
     m.eelWrap.clippingRect = [1150, 690, 462, 280]
     shade = m.eelWrap.CreateChild("Poster")
-    shade.uri = img("eel_cave")
+    setImg(shade, "eel_cave")
     shade.translation = [1491, 764]
 
     outP = [1392, 765]
@@ -400,7 +411,7 @@ sub buildShrimp()
     m.shrimpFinger.id = "shrimpFinger"
     m.shrimpBub = m.shrimpIn.CreateChild("Poster")
     m.shrimpBub.id = "shrimpBub"
-    m.shrimpBub.uri = img("bubble")
+    setImg(m.shrimpBub, "bubble")
     m.shrimpBub.scaleRotateCenter = [32, 32]
     m.shrimpBub.opacity = 0
 
@@ -441,15 +452,15 @@ sub placeShrimp(i as integer, flip as boolean)
     m.shrimpS = s
     g.translation = [m.shrimpX, cy + 8 * s]
     if flip then
-        m.shrimpBody.uri = img("shrimp_l")
-        m.shrimpFinger.uri = img("shrimp_finger_l")
+        setImg(m.shrimpBody, "shrimp_l")
+        setImg(m.shrimpFinger, "shrimp_finger_l")
         m.shrimpFinger.translation = [18, 8]
         m.shrimpFinger.scaleRotateCenter = [18, 28]
         m.shrimpTip = [30, 20]
         m.shrimpOpen = -0.8
     else
-        m.shrimpBody.uri = img("shrimp")
-        m.shrimpFinger.uri = img("shrimp_finger")
+        setImg(m.shrimpBody, "shrimp")
+        setImg(m.shrimpFinger, "shrimp_finger")
         m.shrimpFinger.translation = [78, 8]
         m.shrimpFinger.scaleRotateCenter = [6, 28]
         m.shrimpTip = [90, 20]
@@ -518,7 +529,7 @@ sub buildPlankton()
     for i = 0 to 69
         p = m.glow.CreateChild("Poster")
         p.id = "pk" + i.ToStr()
-        p.uri = img("glow_dot")
+        setImg(p, "glow_dot")
         sz = rnd(5, 16)
         p.scale = [sz / 32, sz / 32]
         base = [rnd(-120, 2040), rnd(60, 1060)]
@@ -545,7 +556,7 @@ sub buildGardenEels()
         y = sp[1]
         s = sp[2]
         hole = m.geG.CreateChild("Poster")
-        hole.uri = img("geel_hole")
+        setImg(hole, "geel_hole")
         hole.scale = [s * 1.2, s * 1.2]
         hole.translation = [x - 24 * s, y - 8.4 * s]
         ' the eel is only drawn above its burrow, so it slides down into the sand
@@ -556,7 +567,7 @@ sub buildGardenEels()
         inner.id = "ge" + i.ToStr()
         po = inner.CreateChild("Poster")
         po.id = "gep" + i.ToStr()
-        po.uri = img("geel_" + sp[3])
+        setImg(po, "geel_" + sp[3])
         po.scaleRotateCenter = [18, 240]
         po.scale = [s, s]
         po.translation = [x - 18, y - 240]
@@ -707,7 +718,7 @@ sub buildSpawning()
     for i = 0 to 79
         p = m.spawnG.CreateChild("Poster")
         p.id = "sp" + i.ToStr()
-        p.uri = img("spawn_dot")
+        setImg(p, "spawn_dot")
         p.opacity = 0
         anim = m.top.CreateChild("Animation")
         anim.easeFunction = "linear"
@@ -969,9 +980,9 @@ sub buildFishing()
     line.color = "0xDDE8F0FF"
     line.opacity = 0.55
     hook = inner.CreateChild("Poster")
-    hook.uri = img("hook")
+    setImg(hook, "hook")
     m.bait = inner.CreateChild("Poster")
-    m.bait.uri = img("bait")
+    setImg(m.bait, "bait")
     addLoopFloat(m.top, "hookGroup", "rotation", 0, 0.012, 7, 0)
     m.thief = g.CreateChild("Creature")
     m.thief.id = "thief"
@@ -1071,6 +1082,14 @@ sub onSpawnTest()
     setMoon()
     m.spawnNext = 0
     updateLight()
+end sub
+
+' hide=id1,id2: hide those nodes (to find which layer causes a drawing problem)
+sub onHideTest()
+    for each id in m.top.hideTest.Split(",")
+        n = m.top.FindNode(id)
+        if n <> invalid then n.visible = false
+    end for
 end sub
 
 ' shark=1: a reef shark makes the close-up pass in a few seconds

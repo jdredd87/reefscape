@@ -42,6 +42,7 @@ sub showOcean(args as object)
         if args.quality <> invalid then scene.quality = args.quality
         if args.spawn <> invalid then scene.spawnTest = true
         if args.shark <> invalid then scene.sharkTest = true
+        if args.hide <> invalid then scene.hideTest = args.hide
     end if
 
     startMemoryMonitor(port)

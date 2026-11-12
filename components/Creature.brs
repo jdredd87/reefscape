@@ -185,12 +185,16 @@ sub buildParts(parent as object, spec as object, p as string, depth as float, di
         end if
         po = parent.CreateChild("Poster")
         po.id = p + part.id
-        po.uri = img(part.uri + suffix)
+        setImg(po, part.uri + suffix)
         po.translation = [x, part.y]
         if part.dark <> invalid then po.blendColor = tintFor(depth, part.dark) else po.blendColor = tint
         if part.px <> invalid then po.scaleRotateCenter = [px, part.py]
         if part.op <> invalid then po.opacity = part.op
-        if part.up <> invalid then po.scale = [part.up, part.up]
+        ' half-size images (part.h = full height): drawn at full size via width/height
+        if part.h <> invalid then
+            po.width = part.w
+            po.height = part.h
+        end if
         off = 0.0
         if part.po <> invalid then off = part.po
         kind = ""
@@ -204,14 +208,14 @@ sub buildParts(parent as object, spec as object, p as string, depth as float, di
 end sub
 
 sub buildSchool(inner as object, spec as object, p as string, tint as string, dir as integer, spread as float)
-    uri = img("school_fish")
-    if dir = -1 then uri = img("school_fish_l")
+    fishImg = "school_fish"
+    if dir = -1 then fishImg = "school_fish_l"
     for i = 0 to spec.school - 1
         fx = spec.cx + rnd(-190, 130) * dir * spread - 61
         fy = spec.cy + rnd(-80, 80) * spread - 23
         po = inner.CreateChild("Poster")
         po.id = p + "f" + i.ToStr()
-        po.uri = uri
+        setImg(po, fishImg)
         po.translation = [fx, fy]
         po.blendColor = tint
         m.anims.Push(addLoopVec(m.top, po.id, "translation", [fx, fy], [rnd(5, 12), rnd(4, 9)], rnd(1.6, 3.2), rnd(0, 6.28)))
@@ -347,7 +351,7 @@ sub addExhale(inner as object, spec as object, p as string, dir as integer, tint
     for i = 0 to 4
         b = inner.CreateChild("Poster")
         b.id = p + "bub" + i.ToStr()
-        b.uri = img("bubble")
+        setImg(b, "bubble")
         sz = rnd(14, 26)
         b.scale = [sz / 64, sz / 64]
         b.blendColor = tint

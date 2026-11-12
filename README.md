@@ -29,10 +29,11 @@ oku.ps1 log -Launch "..."`): `hour=21.5` (start at a time of day),
 `off=shark%2Ceel` (save that list of disabled animals; `off=none` turns all back on),
 `clock=both` (show the clock this run), `fish=1` (fishing event in 2 s), `diver=1` (send the diver now), `shrimp=1` (shrimp pops out now),
 `shark=1` (a close-up shark pass in 2 s, to see fish scatter), `spawn=1` (treat tonight as a full-moon coral spawning night; use with `hour=22`),
-`quality=0|1|2` (force minimal / reduced / full quality and skip the frame-rate checks). Combine with `&`.
+`quality=0|1|2` (force minimal / reduced / full quality; the probe then measures every 5 s and only reports),
+`hide=surfaceGroup%2Crays` (hide nodes by id, to find which layer causes a drawing problem). Combine with `&`.
 
-Quality tiers: the scene starts at full quality, or lower on Roku Express / Streaming Stick and older models,
-and steps down a tier if its frame-rate probe reads under 24 twice in a row. The probe reads about 29 on a healthy
+Quality tiers: the scene starts at full quality, or lower on Roku Express / Streaming Stick, older models and
+720p Roku TVs, and steps down a tier if its frame-rate probe reads under 26 twice in a row. The probe reads about 29 on a healthy
 Roku (it is capped near 30) and prints `fps NN, quality N` to the debug console.
 When running as an app the remote also works: Left/Right shift the time by an hour, OK resets,
 Play toggles the 4-minute day, * opens settings.
@@ -75,3 +76,14 @@ and to `animalList()` in `Settings.brs` so it gets a checkbox.
   signed with the same key, so back the folder up and never publish it.
 - `store\` holds the listing: `LISTING.md` (texts and dashboard choices), the 540x405 poster, six 1920x1080
   screenshots, and the privacy policy and terms pages, which must be hosted at a public address.
+
+## Testing on other Rokus
+Tested 2026-11-12 (Roku OS 16.0.4), probe readings at full / reduced / minimal quality:
+Ultra 4850X 29 (stays full); Ultra 4660X (2016) 24 / 26 / 28 (steps to reduced);
+TCL Roku TV 7120X 22-24 (steps to reduced); TCL Roku TV 8101X (720p) 24 / 27 / 31 (starts at reduced).
+720p Rokus decode large images at 2/3 size via `setImg` (Util.brs) and `components/ImageSizes.brs`
+(regenerate with `node tools/make-art.js sizes` after adding images): about 15 MB of textures instead of 34 MB.
+Half-size images are drawn with explicit width/height, not scale: some TVs leave gaps with scaled posters.
+Every sideload leaves the previous install's textures in memory until the Roku restarts, so restart a test
+Roku after many installs before judging texture memory (`.\tools\roku.ps1 mem`).
+To install on another Roku: `.\build.ps1 -RokuIP <ip> -Password <pw>`; the tools take `-RokuIP` too.
