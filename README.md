@@ -19,6 +19,7 @@ clock (time, date or both; it hops corners every few minutes to avoid burn-in) a
 .\build.ps1 -RokuIP 192.168.50.162 -Password <dev password>   # zip + sideload (prints compile errors if any)
 .\tools\roku.ps1 log      # launch it and print the Roku debug console
 .\tools\roku.ps1 shot     # save a screenshot of the TV to out\screenshot.jpg
+                          # (reads the dev password from tools\roku-password.txt, which is not in git)
 ```
 Run these from **PowerShell** (Git Bash's `tar` can't create the zip).
 
