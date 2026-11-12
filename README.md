@@ -3,7 +3,7 @@
 An animated "2.5D" coral reef: depth layers with parallax camera sway, depth haze, sun rays,
 moving caustics on the sand, bubbles, swaying kelp and ~30 animated creatures: reef fish, schools,
 lionfish, sharks, sea turtles, mantas, jellyfish, octopus, a dolphin pod, a distant whale, seahorses,
-crabs, sea stars, a moray eel in the rock cave, a snapping shrimp that pops out of the sponge tubes and a clownfish pair living in the anemone. Now and then a scuba
+crabs, sea stars, a moray eel in the rock cave, a snapping shrimp that pops out of the sponge tubes, a colony of garden eels that duck into the sand, and a clownfish pair living in the anemone. Reef fish scatter when a shark swims through, and on the nights after a full moon the corals spawn under the moonlight. Now and then a scuba
 diver passes far away, and a baited fishing hook comes down; a fish always steals the worm and gets away.
 
 **Day/night:** follows the Roku's clock. Warm light at sunrise/sunset; at night the reef darkens,
@@ -27,7 +27,13 @@ Launch options for testing (`.\tools\roku.ps1 log -Launch "..."`): `hour=21.5` (
 oku.ps1 log -Launch "..."`): `hour=21.5` (start at a time of day),
 `demo=1` (whole day in 4 minutes), `settings=1` (open the settings panel),
 `off=shark%2Ceel` (save that list of disabled animals; `off=none` turns all back on),
-`clock=both` (show the clock this run), `fish=1` (fishing event in 2 s), `diver=1` (send the diver now), `shrimp=1` (shrimp pops out now). Combine with `&`.
+`clock=both` (show the clock this run), `fish=1` (fishing event in 2 s), `diver=1` (send the diver now), `shrimp=1` (shrimp pops out now),
+`shark=1` (a close-up shark pass in 2 s, to see fish scatter), `spawn=1` (treat tonight as a full-moon coral spawning night; use with `hour=22`),
+`quality=0|1|2` (force minimal / reduced / full quality and skip the frame-rate checks). Combine with `&`.
+
+Quality tiers: the scene starts at full quality, or lower on Roku Express / Streaming Stick and older models,
+and steps down a tier if its frame-rate probe reads under 24 twice in a row. The probe reads about 29 on a healthy
+Roku (it is capped near 30) and prints `fps NN, quality N` to the debug console.
 When running as an app the remote also works: Left/Right shift the time by an hour, OK resets,
 Play toggles the 4-minute day, * opens settings.
 

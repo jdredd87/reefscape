@@ -645,6 +645,42 @@ asset('shrimp', 120, 200, () => {
 asset('shrimp_finger', 24, 30, () => `<path d="M3,28 C0,18 3,8 11,2 C15,6 14,14 11,28 Z" fill="#e0442c" stroke="#8e1f10" stroke-width="1.4"/>
   <path d="M10,4 C8,8 7,12 7,16" fill="none" stroke="#fff1e4" stroke-width="2" stroke-linecap="round"/>`);
 
+// garden eels: drawn standing up out of the sand, base centre at [18,240], head curled forward (to the right)
+function gardenEel(kind) {
+  const pts = [[18, 240], [18, 200], [17, 160], [17, 122], [18, 90], [20, 64], [24, 44], [30, 32], [38, 25], [46, 23]];
+  const ws = [11, 11, 11, 11, 11, 10.5, 10, 9.5, 9, 8];
+  const body = taperW(pts, ws), N = normalsOf(pts);
+  const head = 'M38,18 C46,14 56,17 57,24 C57,30 50,32 42,31 C38,30 35,26 35,23 Z';
+  let marks = '';
+  if (kind === 'a') {
+    // spotted garden eel: pale with fine dark speckles and a black blotch at the gill
+    for (let i = 0; i < 70; i++) marks += `<circle cx="${f(rand(8, 56))}" cy="${f(rand(14, 240))}" r="${f(rand(0.7, 1.6))}" fill="#2b2418" opacity=".75"/>`;
+    marks += '<ellipse cx="26" cy="47" rx="6" ry="7.5" fill="#15110a"/>';
+  } else {
+    // splendid garden eel: orange with white rings
+    for (let i = 1; i < pts.length - 2; i++) for (const t of [0.15, 0.6]) {
+      const j = i + 1, p = [pts[i][0] + (pts[j][0] - pts[i][0]) * t, pts[i][1] + (pts[j][1] - pts[i][1]) * t], n = N[i], w = 7;
+      marks += `<path d="M${f(p[0] + n[0] * w)},${f(p[1] + n[1] * w)} L${f(p[0] - n[0] * w)},${f(p[1] - n[1] * w)}" stroke="#fff4e6" stroke-width="4.5"/>`;
+    }
+  }
+  const c = kind === 'a' ? ['#cbbd98', '#f4ecd6', '#d8caa6'] : ['#d4560e', '#ff9a3c', '#e2661a'];
+  const edge = kind === 'a' ? '#6d6045' : '#8a3204';
+  return `<defs>${lin('g', [[0, c[0]], [0.5, c[1]], [1, c[2]]], 0, 0, 1, 0)}<clipPath id="c"><path d="${body}"/><path d="${head}"/></clipPath></defs>
+  <path d="${body}" fill="url(#g)"/><path d="${head}" fill="url(#g)"/>
+  <g clip-path="url(#c)">${marks}</g>
+  <path d="${body}" fill="none" stroke="${edge}" stroke-width="1.4"/><path d="${head}" fill="none" stroke="${edge}" stroke-width="1.4"/>
+  <path d="M50,28 C53,28 55,27 56,25" fill="none" stroke="${edge}" stroke-width="1.3" stroke-linecap="round"/>
+  <path d="M28,52 C34,50 37,54 34,58 Z" fill="${c[1]}" stroke="${edge}" stroke-width="1"/>
+  ${eye(46, 21, 3.2, kind === 'a' ? '#f2e2a0' : '#ffe08a')}`;
+}
+asset('geel_a', 60, 240, () => gardenEel('a'));
+asset('geel_b', 60, 240, () => gardenEel('b'));
+// the burrow each garden eel lives in
+asset('geel_hole', 40, 14, () => `<defs>${rad('h', [[0, '#1d1708', 0.9], [0.55, '#3a2f16', 0.6], [1, '#6b5a30', 0]])}</defs><ellipse cx="20" cy="7" rx="20" ry="7" fill="url(#h)"/>`);
+// coral spawn bundles (full-moon nights) and the moon's glow through the surface
+asset('spawn_dot', 24, 24, () => `<defs>${rad('s', [[0, '#fff3f6', 1], [0.35, '#ffa3c0', 0.95], [0.7, '#ff6f9a', 0.35], [1, '#ff6f9a', 0]])}</defs><circle cx="12" cy="12" r="12" fill="url(#s)"/>`);
+asset('moon_glow', 128, 128, () => `<defs>${rad('m', [[0, '#f6fcff', 0.95], [0.3, '#dff2ff', 0.5], [1, '#bfe6ff', 0]])}</defs><circle cx="64" cy="64" r="64" fill="url(#m)"/>`);
+
 // settings screen icons (checkbox / radio button, normal and focused-row colors)
 for (const [suf, c] of [['', '#e6f4fa'], ['_f', '#062038']]) {
   asset('ui_check_on' + suf, 36, 36, () => `<rect x="3" y="3" width="30" height="30" rx="4" fill="none" stroke="${c}" stroke-width="3"/><path d="M9,18 L16,25 L28,10" fill="none" stroke="${c}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`);

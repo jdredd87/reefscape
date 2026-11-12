@@ -40,6 +40,8 @@ function animalList() as object
         ["star", "Sea stars"]
         ["eel", "Moray eel"]
         ["shrimp", "Snapping shrimp"]
+        ["geel", "Garden eels"]
+        ["spawn", "Coral spawning (full moon)"]
         ["diver", "Scuba diver"]
         ["hook", "Fishing hook"]
     ]

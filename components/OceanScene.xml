@@ -14,9 +14,13 @@
     <field id="diverTest" type="boolean" onChange="onDiverTest" />
     <field id="shrimpTest" type="boolean" onChange="onShrimpTest" />
     <field id="lowMemory" type="boolean" onChange="onLowMemory" />
+    <field id="quality" type="string" onChange="onQuality" />
+    <field id="spawnTest" type="boolean" onChange="onSpawnTest" />
+    <field id="sharkTest" type="boolean" onChange="onSharkTest" />
   </interface>
   <script type="text/brightscript" uri="pkg:/components/Util.brs" />
   <script type="text/brightscript" uri="pkg:/components/Settings.brs" />
+  <script type="text/brightscript" uri="pkg:/components/Specs.brs" />
   <script type="text/brightscript" uri="pkg:/components/OceanScene.brs" />
   <script type="text/brightscript" uri="pkg:/components/OceanKeys.brs" />
 
@@ -50,6 +54,7 @@
       <Group id="bubbles" />
       <Poster id="sandFront" uri="pkg:/images/ocean/sand_front.png" translation="[-140,885]" scale="[1.0743,1.25]" />
       <Group id="caustics" />
+      <Group id="gardenEels" />
       <Group id="nearCreatures" />
       <Group id="fishing" />
     </Group>
@@ -64,6 +69,9 @@
 
     <Group id="camGlow">
       <Group id="plankton" opacity="0" />
+      <!-- full-moon nights: the moon glowing through the surface, and coral spawning -->
+      <Poster id="moonGlow" uri="pkg:/images/ocean/moon_glow.png" translation="[900,-190]" scale="[7,3]" opacity="0" visible="false" />
+      <Group id="spawning" />
     </Group>
     <Group id="camJelly">
       <Group id="jellyCreatures" />
@@ -84,6 +92,9 @@
     </Group>
 
     <SettingsPanel id="settingsPanel" visible="false" />
+
+    <!-- frame-rate probe: an animated empty group; counting its updates measures frames per second -->
+    <Group id="fpsProbe" />
 
     <Timer id="tick" repeat="true" duration="0.5" />
     <Timer id="refocus" repeat="false" duration="0.15" />

@@ -3,8 +3,12 @@
 <component name="Creature" extends="Group">
   <interface>
     <field id="done" type="boolean" alwaysNotify="true" />
+    <!-- read by the scene: which way it faces, and whether it would flee from a shark right now -->
+    <field id="dir" type="integer" value="1" />
+    <field id="fleeable" type="boolean" value="false" />
     <function name="spawn" />
     <function name="despawn" />
+    <function name="flee" />
   </interface>
   <script type="text/brightscript" uri="pkg:/components/Util.brs" />
   <script type="text/brightscript" uri="pkg:/components/Specs.brs" />

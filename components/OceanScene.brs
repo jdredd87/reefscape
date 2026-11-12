@@ -17,26 +17,127 @@ sub init()
     m.refocus = m.top.FindNode("refocus")
     m.refocus.ObserveField("fire", "takeFocus")
     loadUserSettings()
+    m.specs = getSpecs()
+    m.trims = []
+    m.tierForced = false
+    m.forceSpawn = false
+    m.tier = detectTier()
 
     buildLight()
     buildDecor()
     buildEel()
     buildShrimp()
     buildCaustics()
+    buildGardenEels()
     buildBubbles()
     buildParticles()
     buildPlankton()
+    buildSpawning()
     buildClock()
     buildFishing()
     startCamera()
     updateLight()
     buildSlots()
     applyClock()
+    applyTier()
+    startFpsProbe()
     m.top.SetFocus(true)
 
     m.tick = m.top.FindNode("tick")
     m.tick.ObserveField("fire", "onTick")
     m.tick.control = "start"
+end sub
+
+' ---------- quality tiers ----------
+' 2 = full, 1 = reduced, 0 = minimal. Cheaper Rokus get fewer particles, bubbles and animals.
+' The starting tier comes from the model; it steps down if the measured frame rate stays low.
+function detectTier() as integer
+    di = CreateObject("roDeviceInfo")
+    if di.GetGraphicsPlatform() <> "opengl" then return 0
+    pre = Left(di.GetModel(), 2)
+    ' older single-core players and sticks
+    if pre = "27" or pre = "28" or pre = "29" or pre = "35" or pre = "36" or pre = "37" then return 0
+    ' Roku Express and Streaming Stick families
+    if pre = "38" or pre = "39" then return 1
+    return 2
+end function
+
+' node is shown (and its animations run) only when the tier is at least minTier
+sub addTrim(node as object, anims as object, minTier as integer)
+    if minTier > 0 then m.trims.Push({ n: node, a: anims, t: minTier })
+end sub
+
+sub applyTier()
+    for each tr in m.trims
+        show = (m.tier >= tr.t)
+        if tr.n.visible <> show then
+            tr.n.visible = show
+            for each a in tr.a
+                if show then a.control = "start" else a.control = "stop"
+            end for
+        end if
+    end for
+end sub
+
+' only ever steps down
+sub setTier(t as integer)
+    if t < 0 then t = 0
+    if t >= m.tier then return
+    m.tier = t
+    applyTier()
+end sub
+
+' Frame-rate probe: an empty group's opacity is animated, and each update calls onFpsFrame.
+' Measured for 5 seconds, 20 seconds after start and then every 3 minutes.
+sub startFpsProbe()
+    m.fpsProbe = m.top.FindNode("fpsProbe")
+    m.fpsAnim = m.top.CreateChild("Animation")
+    m.fpsAnim.repeat = true
+    m.fpsAnim.duration = 1
+    m.fpsAnim.easeFunction = "linear"
+    fi = m.fpsAnim.CreateChild("FloatFieldInterpolator")
+    fi.key = [0, 1]
+    fi.keyValue = [0.5, 1.0]
+    fi.fieldToInterp = "fpsProbe.opacity"
+    m.fpsProbe.ObserveField("opacity", "onFpsFrame")
+    m.fpsFrames = 0
+    m.fpsState = "wait"
+    m.fpsAt = 20000
+    m.fpsLow = 0
+end sub
+
+sub onFpsFrame()
+    m.fpsFrames = m.fpsFrames + 1
+end sub
+
+sub updateFps(now as float)
+    if m.fpsState = "wait" then
+        if now >= m.fpsAt then
+            m.fpsFrames = 0
+            m.fpsT0 = now
+            m.fpsAnim.control = "start"
+            m.fpsState = "run"
+        end if
+    else if now - m.fpsT0 >= 5000 then
+        m.fpsAnim.control = "stop"
+        fps = m.fpsFrames * 1000 / (now - m.fpsT0)
+        m.fpsState = "wait"
+        print "fps "; Int(fps); ", quality "; m.tier
+        ' the probe tops out near 30 on a healthy Roku (updates arrive at most every other frame);
+        ' a busy one falls well below that
+        if fps < 24 and m.tier > 0 and not m.tierForced then
+            ' two low readings in a row: step down
+            m.fpsLow = m.fpsLow + 1
+            if m.fpsLow >= 2 then
+                setTier(m.tier - 1)
+                m.fpsLow = 0
+            end if
+            m.fpsAt = now + 8000
+        else
+            m.fpsLow = 0
+            m.fpsAt = now + 180000
+        end if
+    end if
 end sub
 
 ' ---------- camera sway (parallax) ----------
@@ -93,7 +194,8 @@ sub buildLight()
         p.scaleRotateCenter = [100, 0]
         p.scale = [rnd(1.2, 2.6), 2.0]
         p.rotation = rnd(0.16, 0.26)
-        addLoopFloat(m.top, p.id, "opacity", 0.3, 0.2, rnd(7, 13), rnd(0, 6.28))
+        a = addLoopFloat(m.top, p.id, "opacity", 0.3, 0.2, rnd(7, 13), rnd(0, 6.28))
+        if i = 1 or i = 4 then addTrim(p, [a], 1)
     end for
 end sub
 
@@ -125,6 +227,8 @@ sub buildCaustics()
         end if
         interp.fieldToInterp = lg.id + ".translation"
         anim.control = "start"
+        ' the second caustics layer is a full-width blend: full quality only
+        if i = 1 then addTrim(lg, [anim], 2)
     end for
 end sub
 
@@ -204,6 +308,11 @@ sub buildBubbles()
             interp.fieldToInterp = b.id + ".translation"
             b.translation = vals[0]
             anim.control = "start"
+            if i >= 6 then
+                addTrim(b, [anim], 2)
+            else if i >= 3 then
+                addTrim(b, [anim], 1)
+            end if
         end for
     end for
 end sub
@@ -220,7 +329,12 @@ sub buildParticles()
         p.opacity = rnd(0.15, 0.5)
         base = [rnd(-150, 2070), rnd(0, 1080)]
         p.translation = base
-        addLoopVec(m.top, p.id, "translation", base, [rnd(-60, 60), rnd(30, 90)], rnd(16, 34), rnd(0, 6.28))
+        a = addLoopVec(m.top, p.id, "translation", base, [rnd(-60, 60), rnd(30, 90)], rnd(16, 34), rnd(0, 6.28))
+        if i >= 22 then
+            addTrim(p, [a], 2)
+        else if i >= 12 then
+            addTrim(p, [a], 1)
+        end if
     end for
 end sub
 
@@ -409,9 +523,273 @@ sub buildPlankton()
         p.scale = [sz / 32, sz / 32]
         base = [rnd(-120, 2040), rnd(60, 1060)]
         p.translation = base
-        addLoopVec(m.top, p.id, "translation", base, [rnd(-50, 50), rnd(25, 70)], rnd(14, 30), rnd(0, 6.28))
-        addLoopFloat(m.top, p.id, "opacity", 0.55, 0.45, rnd(2, 6), rnd(0, 6.28))
+        a1 = addLoopVec(m.top, p.id, "translation", base, [rnd(-50, 50), rnd(25, 70)], rnd(14, 30), rnd(0, 6.28))
+        a2 = addLoopFloat(m.top, p.id, "opacity", 0.55, 0.45, rnd(2, 6), rnd(0, 6.28))
+        if i >= 35 then
+            addTrim(p, [a1, a2], 2)
+        else if i >= 20 then
+            addTrim(p, [a1, a2], 1)
+        end if
     end for
+end sub
+
+' ---------- garden eels: a colony in the open sand that ducks into its burrows ----------
+sub buildGardenEels()
+    m.geG = m.top.FindNode("gardenEels")
+    ' x, base y, scale, colour (a = spotted, b = orange)
+    spots = [[1035, 952, 0.6, "a"], [1090, 937, 0.53, "b"], [1142, 965, 0.67, "a"], [1196, 944, 0.56, "a"], [1250, 960, 0.64, "b"], [1306, 940, 0.52, "a"], [1356, 970, 0.7, "a"]]
+    m.geels = []
+    for i = 0 to spots.Count() - 1
+        sp = spots[i]
+        x = sp[0]
+        y = sp[1]
+        s = sp[2]
+        hole = m.geG.CreateChild("Poster")
+        hole.uri = img("geel_hole")
+        hole.scale = [s * 1.2, s * 1.2]
+        hole.translation = [x - 24 * s, y - 8.4 * s]
+        ' the eel is only drawn above its burrow, so it slides down into the sand
+        wrap = m.geG.CreateChild("Group")
+        h = 240 * s
+        wrap.clippingRect = [x - 70, y - h - 70, 140, h + 70]
+        inner = wrap.CreateChild("Group")
+        inner.id = "ge" + i.ToStr()
+        po = inner.CreateChild("Poster")
+        po.id = "gep" + i.ToStr()
+        po.uri = img("geel_" + sp[3])
+        po.scaleRotateCenter = [18, 240]
+        po.scale = [s, s]
+        po.translation = [x - 18, y - 240]
+        ' they all lean into the same current, a little out of step
+        addLoopFloat(m.top, po.id, "rotation", 0.02, 0.06, rnd(3.6, 4.2), i * 0.5)
+        anim = m.top.CreateChild("Animation")
+        anim.easeFunction = "linear"
+        vi = anim.CreateChild("Vector2DFieldInterpolator")
+        vi.fieldToInterp = inner.id + ".translation"
+        m.geels.Push({ x: x, h: h + 10, inner: inner, anim: anim, vi: vi })
+    end for
+    m.geDown = false
+    m.geUpAt = 0
+    m.geSolo = rnd(15, 30) * 1000
+    m.geG.visible = (m.off["geel"] = invalid)
+end sub
+
+sub moveGeel(e as object, toY as float, duration as float, delay as float, ease as string)
+    cur = e.inner.translation[1]
+    e.anim.control = "stop"
+    e.anim.duration = duration
+    e.anim.delay = delay
+    e.anim.easeFunction = ease
+    e.vi.key = [0, 1]
+    e.vi.keyValue = [[0, cur], [0, toY]]
+    e.anim.control = "start"
+end sub
+
+' something swimming close to the sand near the colony? returns its x, or invalid
+function geelThreat() as dynamic
+    for each c in liveCreatures("near")
+        if c.kind <> "star" and c.kind <> "seahorse" and c.kind <> "clown" then
+            big = (c.kind = "shark" or c.kind = "turtle" or c.kind = "manta" or c.kind = "dolphin")
+            ' big animals are noticed from further away; crabs only right at the colony
+            m0 = 120
+            if big then m0 = 260
+            if c.kind = "crab" then m0 = 60
+            if c.x > 1035 - m0 and c.x < 1356 + m0 and (c.y > 740 or (big and c.y > 450)) then return c.x
+        end if
+    end for
+    return invalid
+end function
+
+sub updateGardenEels(now as float)
+    if m.off["geel"] <> invalid then return
+    ' garden eels sleep inside their burrows at night
+    night = m.day < 0.2
+    tx = invalid
+    if not night then tx = geelThreat()
+    if night or tx <> invalid then
+        if not m.geDown then
+            m.geDown = true
+            for each e in m.geels
+                if night then
+                    moveGeel(e, e.h, 1.5, rnd(0, 3), "linear")
+                else
+                    ' a quick wave of ducking, starting nearest the visitor
+                    moveGeel(e, e.h, 0.3, Abs(e.x - tx) / 1600.0, "linear")
+                end if
+            end for
+        end if
+        m.geUpAt = now + rnd(3500, 6000)
+    else if m.geDown and now >= m.geUpAt then
+        m.geDown = false
+        for each e in m.geels
+            moveGeel(e, 0, rnd(2.2, 3.4), rnd(0, 2.5), "outQuad")
+        end for
+        m.geSolo = now + rnd(15, 35) * 1000
+    else if not m.geDown and now >= m.geSolo then
+        ' now and then one eel ducks on its own and slowly comes back up
+        e = m.geels[Int(Rnd(0) * m.geels.Count())]
+        e.anim.control = "stop"
+        e.anim.duration = 6
+        e.anim.delay = 0
+        e.anim.easeFunction = "linear"
+        e.vi.key = [0, 0.05, 0.5, 1]
+        e.vi.keyValue = [[0, 0], [0, e.h], [0, e.h], [0, 0]]
+        e.anim.control = "start"
+        m.geSolo = now + rnd(12, 30) * 1000
+    end if
+end sub
+
+' centre, scale and node of every creature currently placed in a layer (layer coordinates)
+function liveCreatures(layer as string) as object
+    out = []
+    for each sl in m.slots
+        if sl.layer = layer and sl.kind <> invalid and sl.kind <> "" then
+            spec = m.specs[sl.kind]
+            for each node in sl.nodes
+                if node.getChildCount() > 0 then
+                    root = node.getChild(0)
+                    t = root.translation
+                    out.Push({ kind: sl.kind, x: t[0] + spec.cx, y: t[1] + spec.cy, s: Abs(root.scale[0]), node: node })
+                end if
+            end for
+        end if
+    end for
+    return out
+end function
+
+' ---------- fish scatter when a shark comes through ----------
+sub updateScatter()
+    for each layer in ["far", "mid", "near"]
+        hasShark = false
+        for each sl in m.slots
+            if sl.layer = layer and sl.kind = "shark" then hasShark = true
+        end for
+        if hasShark then
+            live = liveCreatures(layer)
+            for each sh in live
+                if sh.kind = "shark" then
+                    sd = sh.node.dir
+                    for each p in live
+                        if p.node.fleeable then
+                            ahead = (p.x - sh.x) * sd
+                            if ahead > -250 * sh.s and ahead < 1100 * sh.s and Abs(p.y - sh.y) < 330 * sh.s then
+                                away = 1
+                                if p.y < sh.y then away = -1
+                                if p.y < 160 then away = 1
+                                if p.y > 860 then away = -1
+                                ' swimming towards the shark's mouth: turn round first
+                                turn = (p.node.dir = -sd and ahead > 0)
+                                p.node.callFunc("flee", { awayY: away, turn: turn })
+                            end if
+                        end if
+                    end for
+                end if
+            end for
+        end if
+    end for
+end sub
+
+' ---------- full-moon nights: moonlight and coral spawning ----------
+' days from the nearest full moon (negative = before it), from the Roku's clock
+function moonFromFull() as float
+    dt = CreateObject("roDateTime")
+    days = (dt.AsSeconds() - 947182440) / 86400#
+    syn = 29.530588853#
+    age = days - syn * Int(days / syn)
+    return age - syn / 2
+end function
+
+sub buildSpawning()
+    m.spawnG = m.top.FindNode("spawning")
+    m.moonGlow = m.top.FindNode("moonGlow")
+    addLoopVec(m.top, "moonGlow", "scale", [7, 3], [0.35, 0.15], 7, 0)
+    m.spawnPool = []
+    for i = 0 to 79
+        p = m.spawnG.CreateChild("Poster")
+        p.id = "sp" + i.ToStr()
+        p.uri = img("spawn_dot")
+        p.opacity = 0
+        anim = m.top.CreateChild("Animation")
+        anim.easeFunction = "linear"
+        ti = anim.CreateChild("Vector2DFieldInterpolator")
+        ti.fieldToInterp = p.id + ".translation"
+        oi = anim.CreateChild("FloatFieldInterpolator")
+        oi.fieldToInterp = p.id + ".opacity"
+        m.spawnPool.Push({ p: p, anim: anim, ti: ti, oi: oi, freeAt: 0 })
+    end for
+    ' where the corals release their spawn (x from, x to, y from, y to): staghorns and the brain coral
+    m.spawnSrc = [[170, 470, 610, 760], [1325, 1590, 650, 770], [1050, 1300, 790, 830], [200, 430, 640, 740]]
+    m.spawnNext = 0
+    m.spawnOn = false
+    m.moonCheckAt = 60000
+    m.fromFull = moonFromFull()
+    setMoon()
+end sub
+
+' moonlight strength: 1 at full moon, fading to 0 three days either side
+sub setMoon()
+    k = 1 - Abs(m.fromFull) / 3
+    if k < 0 then k = 0
+    if m.forceSpawn = true then k = 1
+    m.moonK = k
+end sub
+
+sub releaseSpawn(now as float)
+    src = m.spawnSrc[Int(Rnd(0) * m.spawnSrc.Count())]
+    limit = 80
+    if m.tier = 1 then limit = 50
+    if m.tier = 0 then limit = 28
+    n = Int(rnd(18, 30))
+    for i = 0 to limit - 1
+        sp = m.spawnPool[i]
+        if n > 0 and now >= sp.freeAt then
+            n = n - 1
+            x0 = rnd(src[0], src[1])
+            y0 = rnd(src[2], src[3])
+            dur = rnd(16, 26)
+            delay = rnd(0, 4)
+            rise = rnd(550, 900)
+            drift = rnd(-120, 120)
+            ph = rnd(0, 6.28)
+            keys = []
+            vals = []
+            for k = 0 to 10
+                t = k / 10
+                keys.Push(t)
+                vals.Push([x0 + drift * t + 22 * Sin(t * 7 + ph), y0 - rise * t])
+            end for
+            sz = rnd(0.55, 1.15)
+            sp.anim.control = "stop"
+            sp.p.scale = [sz, sz]
+            sp.p.translation = vals[0]
+            sp.p.opacity = 0
+            sp.anim.duration = dur
+            sp.anim.delay = delay
+            sp.ti.key = keys
+            sp.ti.keyValue = vals
+            sp.oi.key = [0, 0.06, 0.6, 1]
+            sp.oi.keyValue = [0, rnd(0.6, 0.95), 0.5, 0]
+            sp.anim.control = "start"
+            sp.freeAt = now + (dur + delay) * 1000 + 300
+        end if
+    end for
+end sub
+
+sub updateSpawning(now as float)
+    if now >= m.moonCheckAt then
+        m.moonCheckAt = now + 60000
+        m.fromFull = moonFromFull()
+        setMoon()
+    end if
+    h = m.hour
+    lateNight = (h >= 20.5 or h < 3.5)
+    ' corals spawn on the nights just after the full moon
+    tonight = (m.fromFull >= -1 and m.fromFull <= 3) or m.forceSpawn = true
+    m.spawnOn = tonight and lateNight and m.day < 0.2 and m.off["spawn"] = invalid
+    if m.spawnOn and now >= m.spawnNext then
+        releaseSpawn(now)
+        m.spawnNext = now + rnd(4, 9) * 1000
+    end if
 end sub
 
 ' ---------- day / night cycle (follows the Roku's local clock) ----------
@@ -454,11 +832,15 @@ sub updateLight()
     end if
     warm = maxf(0, 1 - Abs(h - 6.6) / 1.2) + maxf(0, 1 - Abs(h - 19.0) / 1.2)
     m.day = day
-    m.nightShade.opacity = 0.74 * (1 - day)
+    ' around full moon the night is a little brighter and the moon glows through the surface
+    mk = m.moonK * (1 - day)
+    m.nightShade.opacity = 0.74 * (1 - day) - 0.1 * mk
     m.nightShade.visible = day < 0.995
+    m.moonGlow.opacity = 0.85 * mk
+    m.moonGlow.visible = mk > 0.01
     m.warm.opacity = 0.42 * warm
     m.warm.visible = warm > 0.005
-    m.rays.opacity = 0.12 + 0.88 * day
+    m.rays.opacity = 0.12 + 0.88 * day + 0.16 * mk
     m.caustics.opacity = 0.08 + 0.92 * day
     m.glow.opacity = 1 - day
     m.glow.visible = day < 0.995
@@ -671,8 +1053,31 @@ sub onFishTest()
     if m.fishState = "idle" then m.fishNext = m.clock.TotalMilliseconds() + 1500
 end sub
 
+' the Roku reported low memory: drop to the minimal tier
 sub onLowMemory()
-    m.lowMem = true
+    setTier(0)
+end sub
+
+' quality=0|1|2 launch option: fixed tier, no frame-rate checks
+sub onQuality()
+    m.tierForced = true
+    m.tier = m.top.quality.ToInt()
+    applyTier()
+end sub
+
+' spawn=1: pretend tonight is a full-moon spawning night
+sub onSpawnTest()
+    m.forceSpawn = true
+    setMoon()
+    m.spawnNext = 0
+    updateLight()
+end sub
+
+' shark=1: a reef shark makes the close-up pass in a few seconds
+sub onSharkTest()
+    sl = m.slots[m.closeSlot]
+    sl.forceKind = "shark"
+    if sl.pending <= 0 then sl.due = m.clock.TotalMilliseconds() + 2000
 end sub
 
 sub onShrimpTest()
@@ -711,6 +1116,7 @@ sub onSettingsDone()
     loadUserSettings()
     m.eelWrap.visible = (m.off["eel"] = invalid)
     m.shrimpClip.visible = (m.off["shrimp"] = invalid)
+    m.geG.visible = (m.off["geel"] = invalid)
     applyClock()
     ' remove animals that were just switched off; their slots refill with allowed ones
     now = m.clock.TotalMilliseconds()
@@ -818,8 +1224,8 @@ sub buildSlots()
     ' jellyfish live above the night shade so they glow in the dark; more of them at night
     addSlot({ layer: "jelly", amp: m.amp.jelly, kinds: ["jelly"], dmin: 0.2, dmax: 0.3, ymin: 0, ymax: 0, mode: "rise", gapMin: 10, gapMax: 40 })
     addSlot({ layer: "jelly", amp: m.amp.jelly, kinds: ["jelly"], dmin: 0.4, dmax: 0.5, ymin: 0, ymax: 0, mode: "rise", gapMin: 20, gapMax: 60 })
-    addSlot({ layer: "jelly", amp: m.amp.jelly, kinds: ["jelly"], dmin: 0.3, dmax: 0.45, ymin: 0, ymax: 0, mode: "rise", gapMin: 5, gapMax: 25, nightOnly: true })
-    addSlot({ layer: "jelly", amp: m.amp.jelly, kinds: ["jelly"], dmin: 0.5, dmax: 0.6, ymin: 0, ymax: 0, mode: "rise", gapMin: 5, gapMax: 25, nightOnly: true })
+    addSlot({ layer: "jelly", amp: m.amp.jelly, kinds: ["jelly"], dmin: 0.3, dmax: 0.45, ymin: 0, ymax: 0, mode: "rise", gapMin: 5, gapMax: 25, nightOnly: true, minTier: 1 })
+    addSlot({ layer: "jelly", amp: m.amp.jelly, kinds: ["jelly"], dmin: 0.5, dmax: 0.6, ymin: 0, ymax: 0, mode: "rise", gapMin: 5, gapMax: 25, nightOnly: true, minTier: 1 })
 
     ' a pod of dolphins racing past near the surface (daytime only)
     addSlot({ layer: "mid", amp: m.amp.mid, kinds: ["dolphin"], pod: 3, dmin: 0.5, dmax: 0.64, ymin: 150, ymax: 320, first: 25, gapMin: 90, gapMax: 200, dayOnly: true })
@@ -844,6 +1250,7 @@ sub buildSlots()
     addSlot({ layer: "near", amp: m.amp.near, kinds: ["crab", "crab", "star"], dmin: 0.85, dmax: 0.9, ymin: 985, ymax: 1030, gapMin: 15, gapMax: 45 })
 
     ' rare big close-up pass right in front of the camera
+    m.closeSlot = m.slots.Count()
     addSlot({ layer: "near", amp: m.amp.near, kinds: ["shark", "turtle", "manta", "shark", "dolphin"], nightKinds: ["shark", "octopus", "shark"], dmin: 0.9, dmax: 1.0, ymin: 200, ymax: 560, first: 35, gapMin: 70, gapMax: 150 })
 
     for i = 0 to m.slots.Count() - 1
@@ -858,10 +1265,16 @@ end sub
 
 sub addLayer(layer as string, amp as float, count as integer, kinds as object, nightKinds as object, dmin as float, dmax as float, ymin as float, ymax as float)
     ' each slot gets its own slice of the depth range, so nearer slots draw on top
+    ' lower quality tiers keep about 45% / 70% of the slots
+    k0 = Int(count * 0.45 + 0.99)
+    k1 = Int(count * 0.7 + 0.99)
     for i = 0 to count - 1
         a = dmin + (dmax - dmin) * i / count
         b = dmin + (dmax - dmin) * (i + 1) / count
-        addSlot({ layer: layer, amp: amp, kinds: kinds, nightKinds: nightKinds, rest: 0.45, dmin: a, dmax: b, ymin: ymin, ymax: ymax, gapMin: 1, gapMax: 9 })
+        t = 2
+        if i < k1 then t = 1
+        if i < k0 then t = 0
+        addSlot({ layer: layer, amp: amp, kinds: kinds, nightKinds: nightKinds, rest: 0.45, dmin: a, dmax: b, ymin: ymin, ymax: ymax, gapMin: 1, gapMax: 9, minTier: t })
     end for
 end sub
 
@@ -887,8 +1300,9 @@ end sub
 sub spawnSlot(i as integer, initial as boolean)
     sl = m.slots[i]
     now = m.clock.TotalMilliseconds()
-    ' the Roku reported low memory: keep about half of the animal slots empty
-    if m.lowMem = true and i mod 2 = 1 then
+    ' slots that this quality tier leaves empty
+    if sl.minTier <> invalid and sl.minTier > m.tier then
+        sl.kind = ""
         sl.due = now + 60000
         return
     end if
@@ -917,6 +1331,10 @@ sub spawnSlot(i as integer, initial as boolean)
         return
     end if
     kind = allowed[Int(Rnd(0) * allowed.Count())]
+    if sl.forceKind <> invalid then
+        kind = sl.forceKind
+        sl.forceKind = invalid
+    end if
     sl.kind = kind
     dir = 1
     if Rnd(0) < 0.5 then dir = -1
@@ -958,6 +1376,10 @@ sub onTick()
     tickClock(now)
     updateFishing(now)
     updateShrimp(now)
+    updateGardenEels(now)
+    updateScatter()
+    updateSpawning(now)
+    updateFps(now)
     for i = 0 to m.slots.Count() - 1
         sl = m.slots[i]
         if sl.due > 0 and now >= sl.due then

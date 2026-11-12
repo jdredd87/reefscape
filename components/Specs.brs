@@ -3,6 +3,7 @@
 '   px,py    = pivot (joint) for rotation/scale animation
 '   anim     = "rot" (swing rotation by amp) or "scale" (pulse scale by samp)
 '   po       = phase offset for that part's motion (radians); op = fixed opacity
+'   prey     = darts away from sharks
 '   flat     = keeps a level path (crawlers); hop = little bounce period; noFlip = never mirrored
 '   cx,cy    = creature centre; minX/maxX = horizontal extent (for off-screen maths)
 '   scale    = size at depth 1 (closest); speed = pixels/second at depth 1; bob = vertical wave
@@ -12,15 +13,15 @@ function getSpecs() as object
             { id: "tail", uri: "clown_tail", w: 72, x: -48, y: 24, px: 70, py: 50, anim: "rot", amp: 0.3, period: 0.45 }
             { id: "body", uri: "clown_body", w: 235, x: 0, y: 0 }
         ] }
-        tang: { cx: 130, cy: 90, minX: -46, maxX: 262, scale: 0.85, speed: 120, bob: 35, parts: [
+        tang: { prey: true, cx: 130, cy: 90, minX: -46, maxX: 262, scale: 0.85, speed: 120, bob: 35, parts: [
             { id: "tail", uri: "tang_tail", w: 82, x: -46, y: 34, px: 80, py: 56, anim: "rot", amp: 0.25, period: 0.5 }
             { id: "body", uri: "tang_body", w: 262, x: 0, y: 0 }
         ] }
-        ytang: { cx: 110, cy: 100, minX: -36, maxX: 222, scale: 0.8, speed: 105, bob: 30, parts: [
+        ytang: { prey: true, cx: 110, cy: 100, minX: -36, maxX: 222, scale: 0.8, speed: 105, bob: 30, parts: [
             { id: "tail", uri: "ytang_tail", w: 72, x: -36, y: 45, px: 70, py: 55, anim: "rot", amp: 0.25, period: 0.5 }
             { id: "body", uri: "ytang_body", w: 222, x: 0, y: 0 }
         ] }
-        angel: { cx: 125, cy: 105, minX: -34, maxX: 250, scale: 0.8, speed: 90, bob: 30, parts: [
+        angel: { prey: true, cx: 125, cy: 105, minX: -34, maxX: 250, scale: 0.8, speed: 90, bob: 30, parts: [
             { id: "tail", uri: "angel_tail", w: 72, x: -34, y: 55, px: 70, py: 50, anim: "rot", amp: 0.22, period: 0.6 }
             { id: "body", uri: "angel_body", w: 250, x: 0, y: 0 }
         ] }
@@ -75,6 +76,6 @@ function getSpecs() as object
             { id: "legN", uri: "diver_leg", w: 200, x: -96, y: 46, px: 196, py: 30, anim: "rot", amp: 0.18, period: 1.6 }
             { id: "body", uri: "diver_body", w: 300, x: 0, y: 0 }
         ] }
-        school: { cx: 240, cy: 100, minX: 0, maxX: 480, scale: 0.6, speed: 150, bob: 40, school: 14, parts: [] }
+        school: { prey: true, cx: 240, cy: 100, minX: 0, maxX: 480, scale: 0.6, speed: 150, bob: 40, school: 14, parts: [] }
     }
 end function

@@ -1,6 +1,8 @@
 sub init()
     m.anims = []
     m.swim = invalid
+    m.root = invalid
+    m.gen = 0
     m.specs = getSpecs()
 end sub
 
@@ -11,8 +13,29 @@ sub clearAll()
     end for
     m.anims = []
     m.swim = invalid
+    m.root = invalid
+    m.top.fleeable = false
     m.top.RemoveChildrenIndex(m.top.GetChildCount(), 0)
 end sub
+
+' A shark is coming: dart away from it (params.awayY = -1 up / 1 down; params.turn = turn round first).
+' The creature is rebuilt from where it is now and races off the screen, then reports done as usual.
+function flee(params as object) as boolean
+    if not m.top.fleeable or m.root = invalid then return false
+    t = m.root.translation
+    spec = m.specs[m.cfg.kind]
+    cfg = {}
+    cfg.Append(m.cfg)
+    cfg.mode = "flee"
+    cfg.delay = 0
+    cfg.initial = false
+    cfg.fleeY = params.awayY
+    cfg.turned = (params.turn = true)
+    if cfg.turned then cfg.dir = -m.cfg.dir
+    cfg.startPos = [t[0] + spec.cx, t[1] + spec.cy]
+    spawn(cfg)
+    return true
+end function
 
 ' Remove the creature (used when its animal is switched off in settings)
 function despawn(params as object) as boolean
@@ -25,19 +48,29 @@ end function
 function spawn(cfg as object) as boolean
     clearAll()
     spec = m.specs[cfg.kind]
-    p = "c" + cfg.uid.ToStr() + "_"
+    m.gen = m.gen + 1
+    p = "c" + cfg.uid.ToStr() + "_" + m.gen.ToStr() + "_"
     depth = cfg.depth
     persp = 0.22 + 0.78 * depth
-    s = spec.scale * persp * rnd(0.88, 1.12)
+    ' keep the same size and speed if this is the same animal starting to flee
+    if cfg.sizeK = invalid then cfg.sizeK = rnd(0.88, 1.12)
+    if cfg.speedK = invalid then cfg.speedK = rnd(0.85, 1.15)
+    s = spec.scale * persp * cfg.sizeK
     dir = cfg.dir
     if spec.noFlip <> invalid then dir = 1
     sy = 1.0
     if spec.sy <> invalid then sy = spec.sy
     tint = tintFor(depth)
-    speedK = rnd(0.85, 1.15)
+    speedK = cfg.speedK
     phase = rnd(0, 6.28)
+    m.cfg = cfg
+    m.top.dir = dir
+    ' fleeing animals beat their tails much faster
+    animK = speedK
+    if cfg.mode = "flee" then animK = speedK * 2.6
 
     root = m.top.CreateChild("Group")
+    m.root = root
     root.id = p + "root"
     root.scaleRotateCenter = [spec.cx, spec.cy]
     root.scale = [s, s * sy]
@@ -55,12 +88,14 @@ function spawn(cfg as object) as boolean
         buildParts(gR, spec, p + "R", depth, 1, phase, speedK)
         buildParts(gL, spec, p + "L", depth, -1, phase, speedK)
     else if spec.school <> invalid then
-        buildSchool(inner, spec, p, tint, dir)
+        spread = 1.0
+        if cfg.mode = "flee" then spread = 1.7
+        buildSchool(inner, spec, p, tint, dir, spread)
     else
-        buildParts(inner, spec, p, depth, dir, phase, speedK)
+        buildParts(inner, spec, p, depth, dir, phase, animK)
     end if
 
-    if spec.sway <> invalid then m.anims.Push(addLoopFloat(m.top, inner.id, "rotation", 0, spec.sway, spec.swayPeriod / speedK, phase + 1.6))
+    if spec.sway <> invalid then m.anims.Push(addLoopFloat(m.top, inner.id, "rotation", 0, spec.sway, spec.swayPeriod / animK, phase + 1.6))
     if spec.flap <> invalid then m.anims.Push(addLoopVec(m.top, inner.id, "scale", [1, 0.8], [0, 0.2], spec.flap, phase))
     if spec.exhale <> invalid then addExhale(inner, spec, p, dir, tint)
     if spec.hop <> invalid then m.anims.Push(addLoopVec(m.top, inner.id, "translation", [0, 0], [0, -4], spec.hop, phase))
@@ -73,11 +108,68 @@ function spawn(cfg as object) as boolean
         startBob(cfg, spec, root)
     else if cfg.mode = "steal" then
         startSteal(cfg, spec, root, s, dir)
+    else if cfg.mode = "flee" then
+        startFlee(cfg, spec, root, s, sy, dir, persp, speedK)
     else
         startCross(cfg, spec, root, s, dir, persp, speedK)
+        if spec.prey <> invalid then m.top.fleeable = true
     end if
     return true
 end function
+
+' Dart away from a shark: a burst of speed that eases off, veering up or down, out of the screen
+sub startFlee(cfg as object, spec as object, root as object, s as float, sy as float, dir as integer, persp as float, speedK as float)
+    halfExt = maxf(spec.maxX - spec.cx, spec.cx - spec.minX) * s
+    x0 = cfg.startPos[0] - spec.cx
+    y0 = cfg.startPos[1] - spec.cy
+    if dir = 1 then ex = 1920 + cfg.amp + 40 - spec.cx + halfExt else ex = -cfg.amp - 40 - spec.cx - halfExt
+    dy = cfg.fleeY * rnd(150, 260) * persp
+    ' stay inside the water
+    if cfg.startPos[1] + dy < 70 then dy = 70 - cfg.startPos[1]
+    if cfg.startPos[1] + dy > 900 then dy = 900 - cfg.startPos[1]
+    dist = Abs(ex - x0)
+    if dist < 50 then dist = 50
+    ' average speed 1.9x normal; with the ease-out the first moment is nearly 4x
+    duration = dist / (spec.speed * persp * speedK * 1.9)
+    keys = []
+    pts = []
+    rots = []
+    sgn = 0
+    if dy > 0 then sgn = 1
+    if dy < 0 then sgn = -1
+    for i = 0 to 16
+        t = i / 16
+        keys.Push(t)
+        u = 1 - (1 - t) * (1 - t)
+        v = 1 - (1 - t) ^ 6
+        pts.Push([x0 + (ex - x0) * u, y0 + dy * v])
+        rots.Push(sgn * dir * 0.38 * (1 - t) ^ 3)
+    end for
+    root.translation = pts[0]
+    root.rotation = rots[0]
+    anim = m.top.CreateChild("Animation")
+    anim.duration = duration
+    anim.easeFunction = "linear"
+    posI = anim.CreateChild("Vector2DFieldInterpolator")
+    posI.key = keys
+    posI.keyValue = pts
+    posI.fieldToInterp = root.id + ".translation"
+    rotI = anim.CreateChild("FloatFieldInterpolator")
+    rotI.key = keys
+    rotI.keyValue = rots
+    rotI.fieldToInterp = root.id + ".rotation"
+    if cfg.turned then
+        ' a quick turn: squeezed to a sliver, then full width facing the other way
+        k = 0.2 / duration
+        if k > 0.3 then k = 0.3
+        sI = anim.CreateChild("Vector2DFieldInterpolator")
+        sI.key = [0, k, 1]
+        sI.keyValue = [[s * 0.1, s * sy], [s, s * sy], [s, s * sy]]
+        sI.fieldToInterp = root.id + ".scale"
+        root.scale = [s * 0.1, s * sy]
+    end if
+    watch(anim)
+end sub
 
 ' Adds the creature's posters. Facing left uses the pre-mirrored "_l" images, with positions/pivots mirrored around cx.
 sub buildParts(parent as object, spec as object, p as string, depth as float, dir as integer, phase as float, speedK as float)
@@ -111,12 +203,12 @@ sub buildParts(parent as object, spec as object, p as string, depth as float, di
     end for
 end sub
 
-sub buildSchool(inner as object, spec as object, p as string, tint as string, dir as integer)
+sub buildSchool(inner as object, spec as object, p as string, tint as string, dir as integer, spread as float)
     uri = img("school_fish")
     if dir = -1 then uri = img("school_fish_l")
     for i = 0 to spec.school - 1
-        fx = spec.cx + rnd(-190, 130) * dir - 61
-        fy = spec.cy + rnd(-80, 80) - 23
+        fx = spec.cx + rnd(-190, 130) * dir * spread - 61
+        fy = spec.cy + rnd(-80, 80) * spread - 23
         po = inner.CreateChild("Poster")
         po.id = p + "f" + i.ToStr()
         po.uri = uri
