@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Settings panel: lighting mode, clock display and which animals appear.
+     Used by the screensaver's "Custom settings" and, in the developer build, by the * button. -->
+<component name="SettingsPanel" extends="Group">
+  <interface>
+    <field id="done" type="boolean" alwaysNotify="true" />
+    <function name="open" />
+  </interface>
+  <script type="text/brightscript" uri="pkg:/components/Settings.brs" />
+  <script type="text/brightscript" uri="pkg:/components/SettingsPanel.brs" />
+
+  <children>
+    <Rectangle width="1920" height="1080" color="0x00081A8C" />
+    <Rectangle translation="[340,80]" width="1240" height="920" color="0x0B2C4AF0" />
+    <Rectangle translation="[340,80]" width="1240" height="6" color="0x5CCBE2FF" />
+
+    <Label translation="[400,115]" text="Reefscape Settings" color="0xFFFFFFFF">
+      <Font role="font" uri="font:BoldSystemFontFile" size="54" />
+    </Label>
+
+    <LabelList id="list" translation="[400,215]" itemSize="[640,54]" numRows="13"
+      color="0xE6F4FAFF" focusedColor="0x062038FF" vertFocusAnimationStyle="floatingFocus" />
+
+    <Label translation="[1110,230]" width="420" wrap="true" color="0xC9DDE8FF" lineSpacing="10"
+      text="Choose the lighting, an optional clock, and which animals swim in your reef.">
+      <Font role="font" uri="font:SystemFontFile" size="30" />
+    </Label>
+    <Label translation="[1110,470]" width="420" wrap="true" color="0x9FB8C8FF" lineSpacing="8"
+      text="Up / Down: move&#10;OK: select&#10;Back: close&#10;&#10;Changes are saved automatically.">
+      <Font role="font" uri="font:SystemFontFile" size="28" />
+    </Label>
+    <Label translation="[1030,935]" width="500" horizAlign="right" color="0x7FD6E8FF" text="Created by Steven Chesser &amp; Claude">
+      <Font role="font" uri="font:SystemFontFile" size="26" />
+    </Label>
+  </children>
+</component>

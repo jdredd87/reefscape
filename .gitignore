@@ -1,0 +1,15 @@
+# Signing key and signed packages - NEVER commit (backed up to Google Drive)
+signing/
+*.pkg
+
+# Build output and screenshots
+out/
+
+# Local Roku dev password (used by tools/roku.ps1)
+tools/roku-password.txt
+
+# Editor / OS clutter
+node_modules/
+.vscode/
+Thumbs.db
+desktop.ini

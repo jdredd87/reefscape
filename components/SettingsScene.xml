@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Shown by RunScreenSaverSettings (Settings > Theme > Screensavers > Reefscape > Custom settings) -->
+<component name="SettingsScene" extends="Scene">
+  <interface>
+    <field id="done" type="boolean" alwaysNotify="true" />
+  </interface>
+  <script type="text/brightscript" uri="pkg:/components/SettingsScene.brs" />
+  <children>
+    <Poster uri="pkg:/images/ocean/bg_water.png" scale="[240,1]" />
+    <Poster uri="pkg:/images/ocean/sand.png" translation="[-60,790]" />
+    <Poster uri="pkg:/images/ocean/vignette.png" scale="[4,4]" />
+    <SettingsPanel id="panel" />
+  </children>
+</component>

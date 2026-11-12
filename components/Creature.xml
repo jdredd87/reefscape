@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- One animated sea creature. The scene calls spawn() to (re)configure it; it sets done when it has left the screen. -->
+<component name="Creature" extends="Group">
+  <interface>
+    <field id="done" type="boolean" alwaysNotify="true" />
+    <function name="spawn" />
+    <function name="despawn" />
+  </interface>
+  <script type="text/brightscript" uri="pkg:/components/Util.brs" />
+  <script type="text/brightscript" uri="pkg:/components/Specs.brs" />
+  <script type="text/brightscript" uri="pkg:/components/Creature.brs" />
+</component>

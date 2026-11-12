@@ -1,0 +1,17 @@
+title=Reefscape
+major_version=1
+minor_version=0
+build_version=00002
+
+# Name shown in Settings > Theme > Screensavers
+screensaver_title=Reefscape
+
+# Icons shown on the Roku home screen / app store
+mm_icon_focus_fhd=pkg:/images/icon_fhd.png
+mm_icon_focus_hd=pkg:/images/icon_hd.png
+
+# Coordinates in all XML/BRS files are 1920x1080
+ui_resolutions=fhd
+
+# current SceneGraph runtime (required for certification)
+rsg_version=1.3

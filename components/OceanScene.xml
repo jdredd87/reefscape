@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  Layers, back to front. Each "cam" group drifts by a different amount, which creates the parallax depth effect.
+  Fog posters between layers push distant layers back into the blue.
+-->
+<component name="OceanScene" extends="Scene">
+  <interface>
+    <field id="startHour" type="string" onChange="onStartHour" />
+    <field id="demo" type="boolean" onChange="onDemo" />
+    <field id="openSettings" type="boolean" onChange="openSettingsPanel" />
+    <field id="setOff" type="string" onChange="onSetOff" />
+    <field id="clockTest" type="string" onChange="onClockTest" />
+    <field id="fishTest" type="boolean" onChange="onFishTest" />
+    <field id="diverTest" type="boolean" onChange="onDiverTest" />
+    <field id="shrimpTest" type="boolean" onChange="onShrimpTest" />
+    <field id="lowMemory" type="boolean" onChange="onLowMemory" />
+  </interface>
+  <script type="text/brightscript" uri="pkg:/components/Util.brs" />
+  <script type="text/brightscript" uri="pkg:/components/Settings.brs" />
+  <script type="text/brightscript" uri="pkg:/components/OceanScene.brs" />
+  <script type="text/brightscript" uri="pkg:/components/OceanKeys.brs" />
+
+  <children>
+    <Poster id="bg" uri="pkg:/images/ocean/bg_water.png" scale="[240,1]" />
+
+    <Group id="camFar">
+      <Group id="farBack" />
+      <Poster id="reefFar" uri="pkg:/images/ocean/reef_far.png" translation="[-40,520]" scale="[2,2]" />
+      <Group id="farCreatures" />
+    </Group>
+
+    <Poster id="fog1" uri="pkg:/images/ocean/bg_water.png" scale="[240,1]" opacity="0.38" />
+
+    <Group id="camMid">
+      <Poster id="reefMid" uri="pkg:/images/ocean/reef_mid.png" translation="[-80,580]" scale="[1.0157,1]" />
+      <Group id="midDecor" />
+      <Group id="midCreatures" />
+    </Group>
+
+    <Poster id="fog2" uri="pkg:/images/ocean/bg_water.png" scale="[240,1]" opacity="0.14" />
+
+    <Group id="camLight">
+      <Group id="surfaceGroup" />
+      <Group id="rays" />
+    </Group>
+
+    <Group id="camNear">
+      <Poster id="sand" uri="pkg:/images/ocean/sand.png" translation="[-140,790]" scale="[1.0743,1]" />
+      <Group id="nearDecor" />
+      <Group id="bubbles" />
+      <Poster id="sandFront" uri="pkg:/images/ocean/sand_front.png" translation="[-140,885]" scale="[1.0743,1.25]" />
+      <Group id="caustics" />
+      <Group id="nearCreatures" />
+      <Group id="fishing" />
+    </Group>
+
+    <Group id="camFront">
+      <Group id="particles" />
+    </Group>
+
+    <!-- day/night: warm sunrise/sunset light and the night shade; anything after these stays bright (glows) -->
+    <Rectangle id="nightShade" width="1920" height="1080" color="0x020A1CFF" opacity="0" />
+    <Poster id="warmTint" uri="pkg:/images/ocean/warm_grad.png" scale="[30,2]" opacity="0" />
+
+    <Group id="camGlow">
+      <Group id="plankton" opacity="0" />
+    </Group>
+    <Group id="camJelly">
+      <Group id="jellyCreatures" />
+    </Group>
+
+    <Poster id="vignette" uri="pkg:/images/ocean/vignette.png" scale="[4,4]" />
+
+    <Label id="timeLabel" translation="[1100,50]" width="760" horizAlign="right" color="0xFFFFFFFF" opacity="0">
+      <Font role="font" uri="font:BoldSystemFontFile" size="44" />
+    </Label>
+
+    <!-- optional clock / date (hops between corners every few minutes to avoid screen burn-in) -->
+    <Group id="clockGrp" visible="false" opacity="0.85">
+      <Label id="cTimeS" width="760" color="0x00000099"><Font role="font" uri="font:BoldSystemFontFile" size="84" /></Label>
+      <Label id="cTime" width="760" color="0xFFFFFFFF"><Font role="font" uri="font:BoldSystemFontFile" size="84" /></Label>
+      <Label id="cDateS" width="760" color="0x00000099"><Font role="font" uri="font:SystemFontFile" size="40" /></Label>
+      <Label id="cDate" width="760" color="0xE8F6FFFF"><Font role="font" uri="font:SystemFontFile" size="40" /></Label>
+    </Group>
+
+    <SettingsPanel id="settingsPanel" visible="false" />
+
+    <Timer id="tick" repeat="true" duration="0.5" />
+    <Timer id="refocus" repeat="false" duration="0.15" />
+    <Timer id="biteTimer" repeat="false" duration="10" />
+  </children>
+</component>
