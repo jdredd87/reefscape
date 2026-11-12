@@ -24,7 +24,6 @@ clock (time, date or both; it hops corners every few minutes to avoid burn-in) a
 Run these from **PowerShell** (Git Bash's `tar` can't create the zip).
 
 Launch options for testing (`.\tools\roku.ps1 log -Launch "..."`): `hour=21.5` (start at a time of day),
-oku.ps1 log -Launch "..."`): `hour=21.5` (start at a time of day),
 `demo=1` (whole day in 4 minutes), `settings=1` (open the settings panel),
 `off=shark%2Ceel` (save that list of disabled animals; `off=none` turns all back on),
 `clock=both` (show the clock this run), `fish=1` (fishing event in 2 s), `diver=1` (send the diver now), `shrimp=1` (shrimp pops out now),
