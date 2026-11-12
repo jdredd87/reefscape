@@ -179,10 +179,12 @@ sub buildLight()
     for i = 0 to 2
         p = surf.CreateChild("Poster")
         setImg(p, "surface")
-        ' stored at half size; an explicit size (not scale) draws correctly on every Roku
-        p.width = 2048
+        ' stored at half size; an explicit size (not scale) draws correctly on every Roku.
+        ' 2049 wide (not 2048) so the tile joins land on whole pixels on 720p Rokus (2049 x 2/3 = 1366);
+        ' otherwise a hairline can open between tiles and drift across the screen
+        p.width = 2049
         p.height = 320
-        p.translation = [i * 2048, 0]
+        p.translation = [i * 2049, 0]
     end for
     anim = m.top.CreateChild("Animation")
     anim.repeat = true
@@ -190,7 +192,7 @@ sub buildLight()
     anim.easeFunction = "linear"
     interp = anim.CreateChild("Vector2DFieldInterpolator")
     interp.key = [0, 1]
-    interp.keyValue = [[-200, -24], [-2248, -24]]
+    interp.keyValue = [[-200, -24], [-2249, -24]]
     interp.fieldToInterp = "surfaceGroup.translation"
     anim.control = "start"
 
@@ -223,7 +225,10 @@ sub buildCaustics()
         for k = 0 to 3
             p = lg.CreateChild("Poster")
             setImg(p, L[0])
-            p.translation = [k * 1024, 0]
+            ' 1026 wide for the same reason (whole pixels at 720p)
+            p.width = 1026
+            p.height = 256
+            p.translation = [k * 1026, 0]
         end for
         anim = m.top.CreateChild("Animation")
         anim.repeat = true
@@ -232,9 +237,9 @@ sub buildCaustics()
         interp = anim.CreateChild("Vector2DFieldInterpolator")
         interp.key = [0, 1]
         if L[3] = 1 then
-            interp.keyValue = [[-300, 845], [-1324, 845]]
+            interp.keyValue = [[-300, 845], [-1326, 845]]
         else
-            interp.keyValue = [[-1324, 850], [-300, 850]]
+            interp.keyValue = [[-1326, 850], [-300, 850]]
         end if
         interp.fieldToInterp = lg.id + ".translation"
         anim.control = "start"

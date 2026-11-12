@@ -25,7 +25,9 @@ sub setImg(p as object, name as string)
     end if
     if m.hdLoad then
         sz = m.imgSizes[name]
-        if sz <> invalid and sz[0] * sz[1] >= 20000 then
+        ' repeating tiles (surface, caustics) keep full size: shrinking softens their edges into visible joins
+        tile = (name = "surface" or Left(name, 8) = "caustics")
+        if sz <> invalid and sz[0] * sz[1] >= 20000 and not tile then
             if p.width = 0 then p.width = sz[0]
             if p.height = 0 then p.height = sz[1]
             p.loadDisplayMode = "scaleToFit"
