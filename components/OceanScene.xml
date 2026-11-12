@@ -27,7 +27,7 @@
   <script type="text/brightscript" uri="pkg:/components/OceanKeys.brs" />
 
   <children>
-    <Poster id="bg" uri="pkg:/images/ocean/bg_water.png" scale="[240,1]" />
+    <Poster id="bg" uri="pkg:/images/ocean/bg_water.png" width="8" height="1080" scale="[240,1]" />
 
     <Group id="camFar">
       <Group id="farBack" />
@@ -35,7 +35,7 @@
       <Group id="farCreatures" />
     </Group>
 
-    <Poster id="fog1" uri="pkg:/images/ocean/bg_water.png" scale="[240,1]" opacity="0.38" />
+    <Poster id="fog1" uri="pkg:/images/ocean/bg_water.png" width="8" height="1080" scale="[240,1]" opacity="0.38" />
 
     <Group id="camMid">
       <Poster id="reefMid" translation="[-80,580]" scale="[1.0157,1]" />
@@ -43,7 +43,7 @@
       <Group id="midCreatures" />
     </Group>
 
-    <Poster id="fog2" uri="pkg:/images/ocean/bg_water.png" scale="[240,1]" opacity="0.14" />
+    <Poster id="fog2" uri="pkg:/images/ocean/bg_water.png" width="8" height="1080" scale="[240,1]" opacity="0.14" />
 
     <Group id="camLight">
       <Group id="surfaceGroup" />
@@ -72,7 +72,7 @@
     <Group id="camGlow">
       <Group id="plankton" opacity="0" />
       <!-- full-moon nights: the moon glowing through the surface, and coral spawning -->
-      <Poster id="moonGlow" uri="pkg:/images/ocean/moon_glow.png" translation="[900,-190]" scale="[7,3]" opacity="0" visible="false" />
+      <Poster id="moonGlow" uri="pkg:/images/ocean/moon_glow.png" width="128" height="128" translation="[900,-190]" scale="[7,3]" opacity="0" visible="false" />
       <Group id="spawning" />
     </Group>
     <Group id="camJelly">

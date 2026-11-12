@@ -13,10 +13,11 @@ function img(name as string) as string
     return "pkg:/images/ocean/" + name + ".png"
 end function
 
-' Set a poster's image. 720p Rokus draw the whole scene at 2/3 size, so there large images are
-' decoded at that size: less than half the texture memory and no visible difference.
-' loadWidth/loadHeight are given in the app's 1080p units and Roku converts them to 720p itself,
-' so the image's own size is passed. The poster keeps that size, so the layout is unchanged.
+' Set a poster's image. On 720p Rokus two things are needed:
+' - an explicit width/height: without one, Roku draws an image's pixels as 720p pixels, i.e. 1.5x
+'   too big in this app's 1080p layout (a creature's tail would no longer fit its body)
+' - large images are decoded at 2/3 size (the size they are shown at): less than half the texture
+'   memory, no visible difference. loadWidth/loadHeight are in 1080p units; Roku converts them.
 sub setImg(p as object, name as string)
     if m.hdLoad = invalid then
         ui = CreateObject("roDeviceInfo").GetUIResolution()
@@ -25,14 +26,16 @@ sub setImg(p as object, name as string)
     end if
     if m.hdLoad then
         sz = m.imgSizes[name]
-        ' repeating tiles (surface, caustics) keep full size: shrinking softens their edges into visible joins
-        tile = (name = "surface" or Left(name, 8) = "caustics")
-        if sz <> invalid and sz[0] * sz[1] >= 20000 and not tile then
+        if sz <> invalid then
             if p.width = 0 then p.width = sz[0]
             if p.height = 0 then p.height = sz[1]
-            p.loadDisplayMode = "scaleToFit"
-            p.loadWidth = sz[0]
-            p.loadHeight = sz[1]
+            ' repeating tiles (surface, caustics) keep full size: shrinking softens their edges into visible joins
+            tile = (name = "surface" or Left(name, 8) = "caustics")
+            if sz[0] * sz[1] >= 20000 and not tile then
+                p.loadDisplayMode = "scaleToFit"
+                p.loadWidth = sz[0]
+                p.loadHeight = sz[1]
+            end if
         end if
     end if
     p.uri = img(name)

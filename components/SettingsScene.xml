@@ -6,9 +6,9 @@
   </interface>
   <script type="text/brightscript" uri="pkg:/components/SettingsScene.brs" />
   <children>
-    <Poster uri="pkg:/images/ocean/bg_water.png" scale="[240,1]" />
-    <Poster uri="pkg:/images/ocean/sand.png" translation="[-60,790]" />
-    <Poster uri="pkg:/images/ocean/vignette.png" scale="[4,4]" />
+    <Poster uri="pkg:/images/ocean/bg_water.png" width="8" height="1080" scale="[240,1]" />
+    <Poster uri="pkg:/images/ocean/sand.png" width="2048" height="300" translation="[-60,790]" />
+    <Poster uri="pkg:/images/ocean/vignette.png" width="480" height="270" scale="[4,4]" />
     <SettingsPanel id="panel" />
   </children>
 </component>

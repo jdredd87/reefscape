@@ -84,6 +84,8 @@ TCL Roku TV 7120X 22-24 (steps to reduced); TCL Roku TV 8101X (720p) 24 / 27 / 3
 720p Rokus decode large images at 2/3 size via `setImg` (Util.brs) and `components/ImageSizes.brs`
 (regenerate with `node tools/make-art.js sizes` after adding images): about 15 MB of textures instead of 34 MB.
 Half-size images are drawn with explicit width/height, not scale: some TVs leave gaps with scaled posters.
+On 720p Rokus a poster without width/height is drawn 1.5x too big (image pixels are treated as 720p pixels),
+so every image goes through `setImg`, which gives it its size there, and XML posters with an image have width/height.
 Every sideload leaves the previous install's textures in memory until the Roku restarts, so restart a test
 Roku after many installs before judging texture memory (`.\tools\roku.ps1 mem`).
 To install on another Roku: `.\build.ps1 -RokuIP <ip> -Password <pw>`; the tools take `-RokuIP` too.
