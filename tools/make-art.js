@@ -595,6 +595,17 @@ asset('seastar', 130, 130, () => {
   return `<defs>${rad('s', [[0, '#ffa860'], [0.7, '#e2582a'], [1, '#b03a16']])}</defs><path d="${smooth(p, true)}" fill="url(#s)" stroke="#7a2a0e" stroke-width="2"/>${bumps}`;
 });
 
+// crawling sea star: five copies of one arm, rotated round a centre disc that hides their roots
+asset('seastar_arm', 50, 66, () => {
+  let bumps = ''; for (let k = 0; k < 5; k++) bumps += `<circle cx="25" cy="${f(52 - k * 10)}" r="${f(3.4 - k * 0.4)}" fill="#ffd9a0"/>`;
+  return `<defs>${lin('a', [[0, '#b03a16'], [0.35, '#e2582a'], [1, '#e2582a']])}</defs>
+  <path d="M3,66 C5,44 14,20 20,8 C22,3 28,3 30,8 C36,20 45,44 47,66 Z" fill="url(#a)" stroke="#7a2a0e" stroke-width="2"/>${bumps}`;
+});
+asset('seastar_disc', 60, 60, () => {
+  let bumps = ''; for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + (i * 2 * Math.PI) / 5; bumps += `<circle cx="${f(30 + Math.cos(a) * 12)}" cy="${f(30 + Math.sin(a) * 12)}" r="3.4" fill="#ffd9a0"/>`; }
+  return `<defs>${rad('d', [[0, '#ffa860'], [0.75, '#e86a34'], [1, '#e2582a']])}</defs><circle cx="30" cy="30" r="27" fill="url(#d)"/>${bumps}<circle cx="30" cy="30" r="3" fill="#c84a1e"/>`;
+});
+
 asset('eel', 260, 120, () => {
   const body = 'M260,50 C210,40 160,34 120,38 C90,40 62,38 40,44 C20,50 8,60 10,70 L92,70 C120,80 160,94 200,100 C226,104 244,106 260,108 Z';
   let teeth = ''; for (let x = 16; x < 84; x += 8) teeth += `<path d="M${x},70 L${x + 3},76 L${x + 6},70 Z" fill="#f4f0e0"/>`;

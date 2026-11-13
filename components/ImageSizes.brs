@@ -70,6 +70,8 @@ function imageSizes() as object
         "seahorse_fin_l": [44, 44]
         "seahorse_l": [130, 230]
         "seastar": [130, 130]
+        "seastar_arm": [50, 66]
+        "seastar_disc": [60, 60]
         "shark_body": [850, 320]
         "shark_body_l": [850, 320]
         "shark_tail": [272, 320]

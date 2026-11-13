@@ -68,8 +68,13 @@ function getSpecs() as object
             { id: "legsR", uri: "crab_legs_l", w: 100, x: 161, y: 72, px: 4, py: 20, anim: "rot", amp: 0.22, period: 0.35, po: 3.14 }
             { id: "body", uri: "crab_body", w: 220, x: 0, y: 0 }
         ] }
-        star: { cx: 65, cy: 65, minX: 0, maxX: 130, scale: 0.55, speed: 9, bob: 0, flat: true, noFlip: true, sway: 0.12, swayPeriod: 14, parts: [
-            { id: "body", uri: "seastar", w: 130, x: 0, y: 0, px: 65, py: 65, anim: "scale", samp: [0.03, -0.03], period: 3 }
+        star: { cx: 65, cy: 65, minX: 0, maxX: 130, scale: 0.55, speed: 9, bob: 0, flat: true, noFlip: true, sway: 0.05, swayPeriod: 16, crawl: 3.2, parts: [
+            { id: "a0", uri: "seastar_arm", w: 50, x: 40, y: 3, px: 25, py: 62, rot: 0.0, anim: "rot", amp: 0.17, period: 3.2, po: 0.0, samp: [0, -0.16], sph: 1.57 }
+            { id: "a1", uri: "seastar_arm", w: 50, x: 40, y: 3, px: 25, py: 62, rot: 1.2566, anim: "rot", amp: 0.17, period: 3.2, po: 1.2566, samp: [0, -0.16], sph: 1.57 }
+            { id: "a2", uri: "seastar_arm", w: 50, x: 40, y: 3, px: 25, py: 62, rot: 2.5132, anim: "rot", amp: 0.17, period: 3.2, po: 2.5132, samp: [0, -0.16], sph: 1.57 }
+            { id: "a3", uri: "seastar_arm", w: 50, x: 40, y: 3, px: 25, py: 62, rot: 3.7698, anim: "rot", amp: 0.17, period: 3.2, po: 3.7698, samp: [0, -0.16], sph: 1.57 }
+            { id: "a4", uri: "seastar_arm", w: 50, x: 40, y: 3, px: 25, py: 62, rot: 5.0264, anim: "rot", amp: 0.17, period: 3.2, po: 5.0264, samp: [0, -0.16], sph: 1.57 }
+            { id: "disc", uri: "seastar_disc", w: 60, x: 35, y: 35 }
         ] }
         diver: { cx: 100, cy: 66, minX: -104, maxX: 300, scale: 1.3, speed: 45, bob: 15, exhale: [292, 70], parts: [
             { id: "legF", uri: "diver_leg", w: 200, x: -104, y: 42, px: 196, py: 30, anim: "rot", amp: 0.18, period: 1.6, po: 3.14, dark: 0.7 }

@@ -99,6 +99,15 @@ function spawn(cfg as object) as boolean
     if spec.flap <> invalid then m.anims.Push(addLoopVec(m.top, inner.id, "scale", [1, 0.8], [0, 0.2], spec.flap, phase))
     if spec.exhale <> invalid then addExhale(inner, spec, p, dir, tint)
     if spec.hop <> invalid then m.anims.Push(addLoopVec(m.top, inner.id, "translation", [0, 0], [0, -4], spec.hop, phase))
+    ' crawlers that may go either way (noFlip only fixes the image), moving in surges: speed swings
+    ' between 0.2x and 1.8x once per stride of spec.crawl seconds instead of a steady glide
+    moveDir = dir
+    if spec.crawl <> invalid then
+        moveDir = cfg.dir
+        period = spec.crawl / speedK
+        a = 0.8 * (spec.speed * persp * speedK) * period / 6.2831853 / s
+        m.anims.Push(addLoopVec(m.top, inner.id, "translation", [0, 0], [a * moveDir, 0], period, phase))
+    end if
 
     if cfg.mode = "hover" then
         startHover(cfg, spec, root, p, s * sy, s)
@@ -111,7 +120,7 @@ function spawn(cfg as object) as boolean
     else if cfg.mode = "flee" then
         startFlee(cfg, spec, root, s, sy, dir, persp, speedK)
     else
-        startCross(cfg, spec, root, s, dir, persp, speedK)
+        startCross(cfg, spec, root, s, moveDir, persp, speedK)
         if spec.prey <> invalid then m.top.fleeable = true
     end if
     return true
@@ -197,6 +206,11 @@ sub buildParts(parent as object, spec as object, p as string, depth as float, di
         po.translation = [x, part.y]
         if part.dark <> invalid then po.blendColor = tintFor(depth, part.dark) else po.blendColor = tint
         if part.px <> invalid then po.scaleRotateCenter = [px, part.py]
+        base = 0.0
+        if part.rot <> invalid then
+            base = part.rot
+            po.rotation = base
+        end if
         if part.op <> invalid then po.opacity = part.op
         ' half-size images (part.h = full height): drawn at full size via width/height
         if part.h <> invalid then
@@ -208,7 +222,13 @@ sub buildParts(parent as object, spec as object, p as string, depth as float, di
         kind = ""
         if part.anim <> invalid then kind = part.anim
         if kind = "rot" then
-            m.anims.Push(addLoopFloat(m.top, po.id, "rotation", 0, part.amp, part.period / speedK, phase + off))
+            m.anims.Push(addLoopFloat(m.top, po.id, "rotation", base, part.amp, part.period / speedK, phase + off))
+            ' rotating parts can also stretch (a sea star's arm reaching and pulling in); sph = its phase lead
+            if part.samp <> invalid then
+                sph = 0.0
+                if part.sph <> invalid then sph = part.sph
+                m.anims.Push(addLoopVec(m.top, po.id, "scale", [1, 1], part.samp, part.period / speedK, phase + off + sph))
+            end if
         else if kind = "scale" then
             m.anims.Push(addLoopVec(m.top, po.id, "scale", [1, 1], part.samp, part.period, phase + off))
         end if
