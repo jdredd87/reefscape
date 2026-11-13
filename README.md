@@ -29,7 +29,7 @@ Launch options for testing (`.\tools\roku.ps1 log -Launch "..."`): `hour=21.5` (
 `clock=both` (show the clock this run), `fish=1` (fishing event in 2 s), `diver=1` (send the diver now), `shrimp=1` (shrimp pops out now),
 `shark=1` (a close-up shark pass in 2 s, to see fish scatter), `spawn=1` (treat tonight as a full-moon coral spawning night; use with `hour=22`),
 `quality=0|1|2` (force minimal / reduced / full quality; the probe then measures every 5 s and only reports),
-`hide=surfaceGroup%2Crays` (hide nodes by id, to find which layer causes a drawing problem). Combine with `&`.
+`hide=surfaceGroup%2Crays` (hide nodes by id, to find which layer causes a drawing problem). `setscene=1` opens the screensaver's Custom settings screen. Combine with `&`.
 
 Quality tiers: the scene starts at full quality, or lower on Roku Express / Streaming Stick, older models and
 720p Roku TVs, and steps down a tier if its frame-rate probe reads under 26 twice in a row. The probe reads about 29 on a healthy
@@ -66,6 +66,9 @@ and to `animalList()` in `Settings.brs` so it gets a checkbox.
 - Posters with `width`/`height` get a resized copy in texture memory. Use `scale` to stretch instead.
 - Keep images ≤ 2048 px wide.
 - Network keypresses (ECP `/keypress`) are blocked on this Roku, but `/launch/dev?params` works, hence the launch options.
+- On Roku OS 16 a sideloaded **developer** build (it has `title=` and `Main()`) hangs on the splash when opened from
+  Settings > Theme > Screensavers > Reefscape > Custom settings: Roku starts it as an app and never calls `RunScreenSaverSettings`.
+  The store build (`.uild.ps1 -Store`) opens it normally. To test that screen with the developer build, launch it with `setscene=1`.
 
 ## Publishing (Roku Streaming Store)
 
