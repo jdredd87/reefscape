@@ -124,9 +124,17 @@ sub startFlee(cfg as object, spec as object, root as object, s as float, sy as f
     y0 = cfg.startPos[1] - spec.cy
     if dir = 1 then ex = 1920 + cfg.amp + 40 - spec.cx + halfExt else ex = -cfg.amp - 40 - spec.cx - halfExt
     dy = cfg.fleeY * rnd(150, 260) * persp
-    ' stay inside the water
-    if cfg.startPos[1] + dy < 70 then dy = 70 - cfg.startPos[1]
-    if cfg.startPos[1] + dy > 900 then dy = 900 - cfg.startPos[1]
+    ' stay in this layer's own swimming band: below it the reef and sand of the nearer layers are drawn
+    ' in front, and a fish diving there vanishes behind them. With no room on the chosen side, go the other way.
+    lo = 70.0
+    hi = 900.0
+    if cfg.ymin <> invalid then lo = maxf(lo, cfg.ymin)
+    if cfg.ymax <> invalid then hi = cfg.ymax
+    yc = cfg.startPos[1]
+    if dy > 0 and hi - yc < 60 then dy = -dy
+    if dy < 0 and yc - lo < 60 then dy = -dy
+    if yc + dy > hi then dy = hi - yc
+    if yc + dy < lo then dy = lo - yc
     dist = Abs(ex - x0)
     if dist < 50 then dist = 50
     ' average speed 1.9x normal; with the ease-out the first moment is nearly 4x

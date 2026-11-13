@@ -27,7 +27,7 @@ Settings (Settings > Theme > Screensavers > Reefscape > Custom settings):
 No account, no ads, no internet connection needed, and no data collected.
 
 ## Release notes
-1.1.2: Garden eels, fish that scatter from sharks, full-moon coral spawning, and smoother animation on older Roku models.
+1.1.3: Garden eels, fish that scatter from sharks, full-moon coral spawning, and smoother animation on older Roku models.
 
 1.0: First release.
 
@@ -46,7 +46,7 @@ No account, no ads, no internet connection needed, and no data collected.
 - Screenshots 1920x1080: screenshots/1-reef-day.jpg ... 6-clock.jpg (settings-screen.jpg is a spare)
 
 ## Package
-- ../signing/Reefscape-1.1.2.pkg (signed; keep ../signing/SIGNING-KEY.txt safe)
+- ../signing/Reefscape-1.1.3.pkg (signed; keep ../signing/SIGNING-KEY.txt safe)
 
 ## Web pages the profile asks for
 - Privacy policy: privacy-policy.html

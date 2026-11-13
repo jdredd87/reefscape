@@ -1382,6 +1382,8 @@ sub spawnSlot(i as integer, initial as boolean)
             delay: k * rnd(0.4, 0.9)
             home: sl.home
             range: sl.range
+            ymin: sl.ymin
+            ymax: sl.ymax
         }
         sl.nodes[k].callFunc("spawn", cfg)
     end for
