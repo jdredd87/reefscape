@@ -24,6 +24,9 @@ function flee(params as object) as boolean
     if not m.top.fleeable or m.root = invalid then return false
     t = m.root.translation
     spec = m.specs[m.cfg.kind]
+    ' only from on screen (or just at its edge): a fish waiting off screen must not race back in
+    x = t[0] + spec.cx
+    if x < -60 or x > 1980 then return false
     cfg = {}
     cfg.Append(m.cfg)
     cfg.mode = "flee"
@@ -451,6 +454,9 @@ sub onSwimState()
     if m.swim <> invalid and m.swim.state = "stopped" then
         m.swim.UnobserveField("state")
         m.swim = invalid
+        ' finished: it waits off screen until its slot reuses it, so it must not flee any more
+        ' (it would race back across the screen and vanish when the slot spawns the next animal)
+        m.top.fleeable = false
         m.top.done = true
     end if
 end sub
