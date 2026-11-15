@@ -42,7 +42,7 @@ function animalList() as object
         ["shrimp", "Snapping shrimp"]
         ["geel", "Garden eels"]
         ["spawn", "Coral spawning (full moon)"]
-        ["diver", "Scuba diver"]
+        ["diver", "Scuba Steve"]
         ["hook", "Fishing hook"]
     ]
 end function

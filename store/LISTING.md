@@ -15,7 +15,7 @@ Reefscape is a richly animated underwater screensaver with layered depth, gentle
 
 More than 15 kinds of sea life share the reef: blue and yellow tangs, angelfish, a clownfish pair that lives in its anemone, schools of silver fish, lionfish, reef sharks, sea turtles, manta rays, glowing jellyfish, an octopus, a pod of dolphins, a distant humpback whale, seahorses, crabs, sea stars, a moray eel peeking from its cave, a snapping shrimp popping out of the sponges and a colony of garden eels that duck into the sand. Reef fish scatter when a shark swims through.
 
-Little surprises happen now and then: a scuba diver drifts by in the distance, and a baited fishing hook comes down... but the fish always steal the worm and get away.
+Little surprises happen now and then: Scuba Steve the scuba diver drifts by in the distance, and a baited fishing hook comes down... but the fish always steal the worm and get away.
 
 Day and night: the reef follows your Roku clock. Warm light at sunrise and sunset; at night the water darkens, plankton and jellyfish glow, and the night creatures come out. On the nights after a full moon, moonlight shines through and the corals spawn.
 
@@ -27,7 +27,7 @@ Settings (Settings > Theme > Screensavers > Reefscape > Custom settings):
 No account, no ads, no internet connection needed, and no data collected.
 
 ## Release notes
-1.1.5: Garden eels, fish that scatter from sharks, full-moon coral spawning, sea stars that crawl, and smoother animation on older Roku models.
+1.1.6: Garden eels, fish that scatter from sharks, full-moon coral spawning, sea stars that crawl, Scuba Steve the diver, and smoother animation on older Roku models.
 
 1.0: First release.
 
@@ -46,7 +46,7 @@ No account, no ads, no internet connection needed, and no data collected.
 - Screenshots 1920x1080: screenshots/1-reef-day.jpg ... 6-clock.jpg (settings-screen.jpg is a spare)
 
 ## Package
-- ../signing/Reefscape-1.1.5.pkg (signed; keep ../signing/SIGNING-KEY.txt safe)
+- ../signing/Reefscape-1.1.6.pkg (signed; keep ../signing/SIGNING-KEY.txt safe)
 
 ## Web pages the profile asks for
 - Privacy policy: privacy-policy.html
