@@ -32,7 +32,6 @@ sub init()
     buildEel()
     buildShrimp()
     buildCaustics()
-    buildOyster()
     buildGardenEels()
     buildBubbles()
     buildParticles()
@@ -530,85 +529,6 @@ sub updateShrimp(now as float)
     m.shrimpAnim.duration = T
     m.shrimpAnim.control = "start"
     m.shrimpNext = now + T * 1000 + rnd(30, 75) * 1000
-end sub
-
-' ---------- a big oyster on the front sand that now and then slowly opens to show its pearl ----------
-sub buildOyster()
-    cam = m.top.FindNode("camNear")
-    ' after the front sand and caustics, before the garden eels and creatures (crabs walk in front of it)
-    idx = cam.getChildCount()
-    for i = 0 to cam.getChildCount() - 1
-        if cam.getChild(i).id = "gardenEels" then idx = i
-    end for
-    m.oysterG = CreateObject("roSGNode", "Group")
-    cam.insertChild(m.oysterG, idx)
-    m.oysterG.translation = [190, 905]
-    m.oysterG.scale = [1.1, 1.1]
-    base = m.oysterG.CreateChild("Poster")
-    setImg(base, "oyster_base")
-    base.translation = [0, 40]
-    pearl = m.oysterG.CreateChild("Poster")
-    pearl.id = "oysterPearl"
-    setImg(pearl, "oyster_pearl")
-    pearl.translation = [83, 40]
-    pearl.opacity = 0
-    lid = m.oysterG.CreateChild("Poster")
-    lid.id = "oysterLid"
-    setImg(lid, "oyster_lid")
-    lid.scaleRotateCenter = [12, 60]
-    m.oysterAnim = m.top.CreateChild("Animation")
-    m.oysterAnim.easeFunction = "linear"
-    m.oysterLidI = m.oysterAnim.CreateChild("FloatFieldInterpolator")
-    m.oysterLidI.fieldToInterp = "oysterLid.rotation"
-    m.oysterPearlI = m.oysterAnim.CreateChild("FloatFieldInterpolator")
-    m.oysterPearlI.fieldToInterp = "oysterPearl.opacity"
-    m.oysterG.visible = (m.off["oyster"] = invalid)
-    m.oysterNext = rnd(15, 40) * 1000
-end sub
-
-' open slowly, stay open a while (the lid breathing a little), close slowly; then wait a random time
-sub updateOyster(now as float)
-    if now < m.oysterNext then return
-    if m.off["oyster"] <> invalid then
-        m.oysterNext = now + 30000
-        return
-    end if
-    ' (not "T": BrightScript names ignore case, and the loop below uses t)
-    dur = rnd(14, 24)
-    o = rnd(0.32, 0.5)
-    keys = []
-    lid = []
-    pearl = []
-    for i = 0 to 24
-        t = i / 24
-        keys.Push(t)
-        ' 0..0.3 opening, 0.3..0.75 open, 0.75..1 closing (smoothstep ramps)
-        a = 1.0
-        if t < 0.3 then
-            u = t / 0.3
-            a = u * u * (3 - 2 * u)
-        else if t > 0.75 then
-            u = (1 - t) / 0.25
-            a = u * u * (3 - 2 * u)
-        end if
-        b = 1.0
-        if t > 0.3 and t < 0.75 then b = 1 - 0.12 * Sin((t - 0.3) / 0.45 * 6.2831853 * 2) ^ 2
-        lid.Push(o * a * b)
-        pa = a * 1.6
-        if pa > 1 then pa = 1
-        pearl.Push(pa)
-    end for
-    m.oysterLidI.key = keys
-    m.oysterLidI.keyValue = lid
-    m.oysterPearlI.key = keys
-    m.oysterPearlI.keyValue = pearl
-    m.oysterAnim.duration = dur
-    m.oysterAnim.control = "start"
-    m.oysterNext = now + dur * 1000 + rnd(20, 70) * 1000
-end sub
-
-sub onOysterTest()
-    m.oysterNext = m.clock.TotalMilliseconds() + 500
 end sub
 
 ' ---------- bioluminescent plankton (only visible at night) ----------
@@ -1226,7 +1146,6 @@ sub onSettingsDone()
     loadUserSettings()
     m.eelWrap.visible = (m.off["eel"] = invalid)
     m.shrimpClip.visible = (m.off["shrimp"] = invalid)
-    m.oysterG.visible = (m.off["oyster"] = invalid)
     m.geG.visible = (m.off["geel"] = invalid)
     applyClock()
     ' remove animals that were just switched off; their slots refill with allowed ones
@@ -1494,7 +1413,6 @@ sub onTick()
     tickClock(now)
     updateFishing(now)
     updateShrimp(now)
-    updateOyster(now)
     updateGardenEels(now)
     updateScatter()
     updateSpawning(now)

@@ -920,39 +920,14 @@ asset('rock', 572, 325, () => {
   let spots = ''; for (let k = 0; k < 40; k++) spots += `<ellipse cx="${f(rand(40, 400))}" cy="${f(rand(60, 240))}" rx="${f(rand(3, 14))}" ry="${f(rand(2, 7))}" fill="${pick(['#2a3c40', '#5d7470', '#7b5a6a', '#8a7a4a'])}" opacity=".5"/>`;
   return `<defs>${rad('r', [[0, '#6f8a88'], [0.7, '#3f5658'], [1, '#22343a']], 0.35, 0.2, 0.9)}<clipPath id="c"><path d="${smooth(pts, true)}"/></clipPath>${rad('cave', [[0, '#010304'], [0.7, '#081114'], [1, '#1c2c30']])}</defs>
   <g transform="scale(1.3)">
+  ${''/* purple tube sponges growing behind the rock's crown: the rock hides their bases */}
+  ${tubeSponge(150, 92, 0.3, ['#3b2370', '#7d55c8', '#c3a6ff'])}
   <path d="${smooth(pts, true)}" fill="url(#r)"/><g clip-path="url(#c)">${spots}
     <ellipse cx="119" cy="170" rx="64" ry="49" fill="#2a3c40" opacity=".8"/><ellipse cx="120" cy="172" rx="58" ry="44" fill="url(#cave)"/>
     <path d="M62,166 C72,126 162,122 180,162" fill="none" stroke="#8fa8a6" stroke-width="4" opacity=".5"/></g>
-  ${''/* a little cluster of purple tube sponges on the rock's crown, the pink sea fan further down the slope */}
-  ${tubeSponge(212, 80, 0.3, ['#3b2370', '#7d55c8', '#c3a6ff'])}
+
   ${branchy(312, 112, { len: 22, w: 6, depth: 3, spread: 0.5, split: 2, trunks: 3, fanOut: 0.5 }, ['#7a2a4a', '#d0507c', '#ff9fc0', '#ffd0e0']).svg}</g>`;
 });
-
-// ===== OYSTER (front sand): bottom shell, pearl, and a lid hinged at the left =====
-const oysterRidges = (d, n, col) => { let r = ''; for (let k = 1; k <= n; k++) r += `<path d="${d(k / (n + 1))}" fill="none" stroke="${col}" stroke-width="2" opacity=".55"/>`; return r; };
-asset('oyster_base', 210, 80, () => {
-  const shell = 'M8,26 C4,40 14,60 40,70 C80,80 140,80 176,70 C198,62 206,44 202,26 C150,36 60,36 8,26 Z';
-  const inner = 'M14,24 C40,10 168,8 198,24 C170,36 44,38 14,24 Z';
-  return `<defs>${lin('sh', [[0, '#8a8278'], [0.5, '#5e564e'], [1, '#3a332e']])}${lin('na', [[0, '#fdfbff'], [0.35, '#e9e2f4'], [0.6, '#f6e3ea'], [1, '#d6e6f2']], 0, 0, 1, 1)}
-    <clipPath id="c"><path d="${shell}"/></clipPath></defs>
-  <path d="${shell}" fill="url(#sh)"/>
-  <g clip-path="url(#c)">${oysterRidges((t) => `M${f(6 + 4 * t)},${f(28 + 40 * t)} C${f(60)},${f(40 + 44 * t)} ${f(150)},${f(40 + 44 * t)} ${f(204 - 6 * t)},${f(28 + 38 * t)}`, 4, '#2a241f')}</g>
-  <path d="${shell}" fill="none" stroke="#2a241f" stroke-width="2"/>
-  <path d="${inner}" fill="#f1e6d0"/>
-  <path d="M22,24 C50,14 162,12 190,24 C162,33 48,34 22,24 Z" fill="url(#na)"/>
-  <path d="${inner}" fill="none" stroke="#b8a888" stroke-width="2.5"/>`;
-});
-asset('oyster_lid', 210, 76, () => {
-  const lid = 'M6,62 C2,44 20,20 60,12 C100,4 150,6 182,20 C204,30 210,48 204,62 C170,70 40,70 6,62 Z';
-  return `<defs>${lin('lt', [[0, '#a59c90'], [0.45, '#7a7168'], [1, '#4c443d']])}<clipPath id="c"><path d="${lid}"/></clipPath></defs>
-  <path d="${lid}" fill="url(#lt)"/>
-  <g clip-path="url(#c)">${oysterRidges((t) => `M${f(4 + 16 * t)},${f(62 - 6 * t)} C${f(30 + 20 * t)},${f(62 - 48 * t)} ${f(170 - 10 * t)},${f(62 - 50 * t)} ${f(206 - 14 * t)},${f(62 - 8 * t)}`, 5, '#3a332c')}
-    <ellipse cx="90" cy="20" rx="60" ry="7" fill="#fff" opacity=".18"/></g>
-  <path d="${lid}" fill="none" stroke="#2a241f" stroke-width="2"/>
-  <path d="M10,63 C44,70 170,70 200,63" fill="none" stroke="#efe6f6" stroke-width="3" opacity=".85"/>`;
-});
-asset('oyster_pearl', 44, 44, () => `<defs>${rad('p', [[0, '#ffffff'], [0.55, '#f1ecf4'], [0.85, '#d6cfe0'], [1, '#b8b0c8']], 0.38, 0.32, 0.7)}${rad('g', [[0, '#fff', 0.55], [1, '#fff', 0]])}</defs>
-  <circle cx="22" cy="22" r="21" fill="url(#g)"/><circle cx="22" cy="22" r="15" fill="url(#p)"/><ellipse cx="16.5" cy="15.5" rx="5" ry="3.2" fill="#fff" opacity=".95"/>`);
 
 asset('bubble', 64, 64, () => `<defs>${rad('b', [[0, '#fff', 0.05], [0.75, '#dff8ff', 0.18], [0.95, '#fff', 0.85], [1, '#fff', 0]])}</defs>
   <circle cx="32" cy="32" r="30" fill="url(#b)"/><ellipse cx="23" cy="21" rx="8" ry="5" fill="#fff" opacity=".85" transform="rotate(-35 23 21)"/>`);

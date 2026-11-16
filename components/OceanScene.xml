@@ -13,7 +13,6 @@
     <field id="fishTest" type="boolean" onChange="onFishTest" />
     <field id="diverTest" type="boolean" onChange="onDiverTest" />
     <field id="shrimpTest" type="boolean" onChange="onShrimpTest" />
-    <field id="oysterTest" type="boolean" onChange="onOysterTest" />
     <field id="lowMemory" type="boolean" onChange="onLowMemory" />
     <field id="quality" type="string" onChange="onQuality" />
     <field id="spawnTest" type="boolean" onChange="onSpawnTest" />
