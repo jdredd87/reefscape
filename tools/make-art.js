@@ -214,8 +214,9 @@ asset('clown_body', 235, 145, () => {
     <ellipse cx="135" cy="44" rx="70" ry="9" fill="#fff" opacity=".35" filter="url(#b6)"/>
   </g>
   <path d="${body}" fill="none" stroke="#1a0a00" stroke-width="2" opacity=".7"/>
-  ${fin('M172,84 C156,90 146,102 144,114 C158,108 168,98 176,90 Z', '#ff9a33', '#111', 2.5)}
-  ${fin('M140,104 C138,120 128,130 116,132 C120,120 122,110 126,100 Z', '#ff8a1a', '#111', 2.5)}
+  ${''/* pelvic fin hangs below the belly under the head band; pectoral fin sits in the orange just behind the head band */}
+  ${fin('M156,114 C154,128 146,138 134,142 C138,130 142,120 144,112 Z', '#ff8a1a', '#111', 2.5)}
+  ${fin('M151,78 C142,82 133,92 129,104 C140,104 149,98 153,92 Z', '#ff9a33', '#111', 2.5)}
   <path d="M220,78 C215,82 210,82 205,80" stroke="#5a2400" stroke-width="2" fill="none"/>
   ${eye(198, 60, 8, '#ff9d3c')}`;
 });
