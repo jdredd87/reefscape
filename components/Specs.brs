@@ -17,18 +17,23 @@ function getSpecs() as object
         tang: { prey: true, cx: 130, cy: 90, minX: -46, maxX: 262, scale: 0.85, speed: 120, bob: 35, parts: [
             { id: "tail", uri: "tang_tail", w: 82, x: -46, y: 34, px: 80, py: 56, anim: "rot", amp: 0.25, period: 0.5 }
             { id: "body", uri: "tang_body", w: 262, x: 0, y: 0 }
+            { id: "pec", uri: "tang_pec", w: 40, x: 158, y: 96, px: 34, py: 4, anim: "rot", amp: 0.3, period: 0.5, po: 1.0, samp: [-0.3, 0], sph: 1.57 }
         ] }
         ytang: { prey: true, cx: 110, cy: 100, minX: -36, maxX: 222, scale: 0.8, speed: 105, bob: 30, parts: [
             { id: "tail", uri: "ytang_tail", w: 72, x: -36, y: 45, px: 70, py: 55, anim: "rot", amp: 0.25, period: 0.5 }
             { id: "body", uri: "ytang_body", w: 222, x: 0, y: 0 }
+            { id: "pec", uri: "ytang_pec", w: 34, x: 142, y: 102, px: 28, py: 3, anim: "rot", amp: 0.3, period: 0.5, po: 1.0, samp: [-0.3, 0], sph: 1.57 }
         ] }
         angel: { prey: true, cx: 125, cy: 105, minX: -34, maxX: 250, scale: 0.8, speed: 90, bob: 30, parts: [
             { id: "tail", uri: "angel_tail", w: 72, x: -34, y: 55, px: 70, py: 50, anim: "rot", amp: 0.22, period: 0.6 }
             { id: "body", uri: "angel_body", w: 250, x: 0, y: 0 }
+            { id: "pec", uri: "angel_pec", w: 38, x: 146, y: 110, px: 32, py: 4, anim: "rot", amp: 0.28, period: 0.6, po: 1.0, samp: [-0.3, 0], sph: 1.57 }
         ] }
         shark: { cx: 400, cy: 165, minX: -220, maxX: 850, scale: 0.75, speed: 150, bob: 40, sway: 0.015, swayPeriod: 1.5, parts: [
             { id: "tail", uri: "shark_tail", w: 272, x: -220, y: 4, px: 270, py: 162, anim: "rot", amp: 0.16, period: 1.5 }
+            { id: "pecf", uri: "shark_pecf", w: 78, x: 566, y: 201, px: 50, py: 7, anim: "rot", amp: 0.08, period: 3.0, po: 1.2 }
             { id: "body", uri: "shark_body", w: 850, x: 0, y: 0 }
+            { id: "pec", uri: "shark_pec", w: 134, x: 486, y: 196, px: 95, py: 10, anim: "rot", amp: 0.08, period: 3.0, po: 1.0 }
         ] }
         turtle: { cx: 300, cy: 160, minX: -22, maxX: 590, scale: 0.7, speed: 65, bob: 35, parts: [
             { id: "ffar", uri: "turtle_flipper", w: 290, x: 153, y: 134, px: 275, py: 30, anim: "rot", amp: 0.38, period: 3.4, po: 0.4, dark: 0.6 }
@@ -46,6 +51,7 @@ function getSpecs() as object
         ] }
         whale: { cx: 650, cy: 220, minX: 0, maxX: 1300, scale: 1.7, speed: 55, bob: 25, sway: 0.015, swayPeriod: 9, parts: [
             { id: "body", uri: "whale", w: 1300, h: 430, x: 0, y: 0 }
+            { id: "fin", uri: "whale_fin", w: 328, h: 148, x: 606, y: 282, px: 280, py: 6, anim: "rot", amp: 0.07, period: 6.0 }
         ] }
         lionfish: { cx: 140, cy: 110, minX: -34, maxX: 280, scale: 0.8, speed: 45, bob: 20, parts: [
             { id: "tail", uri: "lion_tail", w: 80, x: -34, y: 75, px: 78, py: 45, anim: "rot", amp: 0.18, period: 0.9 }
@@ -59,8 +65,9 @@ function getSpecs() as object
         dolphin: { cx: 230, cy: 110, minX: -88, maxX: 540, scale: 0.8, speed: 260, bob: 70, sway: 0.02, swayPeriod: 0.8, parts: [
             { id: "tail", uri: "dolphin_tail", w: 140, x: -88, y: 59, px: 136, py: 62, anim: "rot", amp: 0.3, period: 0.8 }
             { id: "body", uri: "dolphin_body", w: 540, x: 0, y: 0 }
+            { id: "pec", uri: "dolphin_pec", w: 68, x: 336, y: 138, px: 45, py: 3, anim: "rot", amp: 0.14, period: 1.6, po: 1.0 }
         ] }
-        seahorse: { cx: 65, cy: 115, minX: -10, maxX: 130, scale: 0.85, speed: 0, bob: 0, sway: 0.07, swayPeriod: 5, parts: [
+        seahorse: { cx: 65, cy: 115, minX: -10, maxX: 130, scale: 0.85, speed: 0, bob: 0, parts: [
             { id: "fin", uri: "seahorse_fin", w: 44, x: -10, y: 78, px: 42, py: 22, anim: "scale", samp: [-0.4, 0], period: 0.25 }
             { id: "body", uri: "seahorse", w: 130, x: 0, y: 0 }
         ] }

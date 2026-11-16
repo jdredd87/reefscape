@@ -1116,6 +1116,10 @@ end sub
 sub loadUserSettings()
     s = loadSettings()
     m.off = s.off
+    ' how many fish slots are in use: 0 = a few, 1 = some, 2 = lots (all)
+    m.density = 2
+    if s.count = "few" then m.density = 0
+    if s.count = "some" then m.density = 1
     m.clockMode = s.clock
     m.lightMode = s.light
     m.timeOffset = 0
@@ -1147,7 +1151,7 @@ sub onSettingsDone()
     for i = 0 to m.slots.Count() - 1
         sl = m.slots[i]
         if sl.kind <> invalid and sl.kind <> "" then
-            if m.off[sl.kind] <> invalid then
+            if m.off[sl.kind] <> invalid or (sl.dens <> invalid and sl.dens > m.density) then
                 for each n in sl.nodes
                     n.callFunc("despawn", {})
                 end for
@@ -1167,7 +1171,7 @@ sub onSetOff()
         if k <> "" then off[k] = true
     end for
     s = loadSettings()
-    saveSettings({ light: s.light, clock: s.clock, off: off })
+    saveSettings({ light: s.light, clock: s.clock, off: off, count: s.count })
     onSettingsDone()
 end sub
 
@@ -1248,8 +1252,8 @@ sub buildSlots()
     ' jellyfish live above the night shade so they glow in the dark; more of them at night
     addSlot({ layer: "jelly", amp: m.amp.jelly, kinds: ["jelly"], dmin: 0.2, dmax: 0.3, ymin: 0, ymax: 0, mode: "rise", gapMin: 10, gapMax: 40 })
     addSlot({ layer: "jelly", amp: m.amp.jelly, kinds: ["jelly"], dmin: 0.4, dmax: 0.5, ymin: 0, ymax: 0, mode: "rise", gapMin: 20, gapMax: 60 })
-    addSlot({ layer: "jelly", amp: m.amp.jelly, kinds: ["jelly"], dmin: 0.3, dmax: 0.45, ymin: 0, ymax: 0, mode: "rise", gapMin: 5, gapMax: 25, nightOnly: true, minTier: 1 })
-    addSlot({ layer: "jelly", amp: m.amp.jelly, kinds: ["jelly"], dmin: 0.5, dmax: 0.6, ymin: 0, ymax: 0, mode: "rise", gapMin: 5, gapMax: 25, nightOnly: true, minTier: 1 })
+    addSlot({ layer: "jelly", amp: m.amp.jelly, kinds: ["jelly"], dmin: 0.3, dmax: 0.45, ymin: 0, ymax: 0, mode: "rise", gapMin: 5, gapMax: 25, nightOnly: true, minTier: 1, dens: 1 })
+    addSlot({ layer: "jelly", amp: m.amp.jelly, kinds: ["jelly"], dmin: 0.5, dmax: 0.6, ymin: 0, ymax: 0, mode: "rise", gapMin: 5, gapMax: 25, nightOnly: true, minTier: 1, dens: 1 })
 
     ' a pod of dolphins racing past near the surface (daytime only)
     addSlot({ layer: "mid", amp: m.amp.mid, kinds: ["dolphin"], pod: 3, dmin: 0.5, dmax: 0.64, ymin: 150, ymax: 320, first: 25, gapMin: 90, gapMax: 200, dayOnly: true })
@@ -1258,9 +1262,9 @@ sub buildSlots()
     addLayer("near", m.amp.near, 3, nearKinds, nearNight, 0.74, 0.92, 110, 760)
 
     ' seahorses clinging near the corals
-    ' they paddle slowly back and forth around their home, turning at each end
-    addSlot({ layer: "near", amp: m.amp.near, kinds: ["seahorse"], dmin: 0.8, dmax: 0.8, ymin: 0, ymax: 0, mode: "hover", home: [1790, 690], range: 70, period: 34 })
-    addSlot({ layer: "near", amp: m.amp.near, kinds: ["seahorse"], dmin: 0.75, dmax: 0.75, ymin: 0, ymax: 0, mode: "hover", home: [330, 735], range: 90, period: 40 })
+    ' they drift slowly around their home in a loop (never turning: a flipped seahorse looks wrong)
+    addSlot({ layer: "near", amp: m.amp.near, kinds: ["seahorse"], dmin: 0.8, dmax: 0.8, ymin: 0, ymax: 0, mode: "bob", home: [1790, 690], range: 55, period: 36 })
+    addSlot({ layer: "near", amp: m.amp.near, kinds: ["seahorse"], dmin: 0.75, dmax: 0.75, ymin: 0, ymax: 0, mode: "bob", home: [330, 735], range: 70, period: 42 })
 
     ' a scuba diver far in the background, once in a while
     m.diverSlot = m.slots.Count()
@@ -1299,7 +1303,10 @@ sub addLayer(layer as string, amp as float, count as integer, kinds as object, n
         t = 2
         if i < k1 then t = 1
         if i < k0 then t = 0
-        addSlot({ layer: layer, amp: amp, kinds: kinds, nightKinds: nightKinds, rest: 0.45, dmin: a, dmax: b, ymin: ymin, ymax: ymax, gapMin: 1, gapMax: 9, minTier: t })
+        ' the animal count setting keeps every third slot (a few), two in three (some) or all (lots),
+        ' spread through the depth range
+        d = [0, 2, 1][i mod 3]
+        addSlot({ layer: layer, amp: amp, kinds: kinds, nightKinds: nightKinds, rest: 0.45, dmin: a, dmax: b, ymin: ymin, ymax: ymax, gapMin: 1, gapMax: 9, minTier: t, dens: d })
     end for
 end sub
 
@@ -1326,7 +1333,7 @@ sub spawnSlot(i as integer, initial as boolean)
     sl = m.slots[i]
     now = m.clock.TotalMilliseconds()
     ' slots that this quality tier leaves empty
-    if sl.minTier <> invalid and sl.minTier > m.tier then
+    if (sl.minTier <> invalid and sl.minTier > m.tier) or (sl.dens <> invalid and sl.dens > m.density) then
         sl.kind = ""
         sl.due = now + 60000
         return

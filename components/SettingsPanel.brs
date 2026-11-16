@@ -6,13 +6,15 @@ sub init()
     m.list = m.top.FindNode("list")
     m.modes = lightModes()
     m.clocks = clockModes()
+    m.counts = countModes()
     m.animals = animalList()
 
-    ' rows: { kind: "header" | "light" | "clock" | "animal", key }
+    ' rows: { kind: "header" | "light" | "clock" | "count" | "animal", key }
     m.rows = []
     root = CreateObject("roSGNode", "ContentNode")
     addRows(root, "LIGHTING", "light", m.modes)
     addRows(root, "CLOCK", "clock", m.clocks)
+    addRows(root, "HOW MANY ANIMALS", "count", m.counts)
     addRows(root, "ANIMALS", "animal", m.animals)
     m.list.content = root
     m.list.ObserveField("itemSelected", "onSelected")
@@ -49,6 +51,9 @@ sub refresh()
         else if r.kind = "clock" then
             icon = "radio_off"
             if r.key = m.st.clock then icon = "radio_on"
+        else if r.kind = "count" then
+            icon = "radio_off"
+            if r.key = m.st.count then icon = "radio_on"
         else if r.kind = "animal" then
             icon = "check_on"
             if m.st.off[r.key] <> invalid then icon = "check_off"
@@ -70,6 +75,8 @@ sub onSelected()
         m.st.light = r.key
     else if r.kind = "clock" then
         m.st.clock = r.key
+    else if r.kind = "count" then
+        m.st.count = r.key
     else if r.kind = "animal" then
         if m.st.off[r.key] <> invalid then m.st.off.Delete(r.key) else m.st.off[r.key] = true
     else

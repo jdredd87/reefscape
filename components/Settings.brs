@@ -19,6 +19,15 @@ function clockModes() as object
     ]
 end function
 
+' how many swimming animals at once (the fish in the reef's three depth layers)
+function countModes() as object
+    return [
+        ["few", "A few"]
+        ["some", "Some"]
+        ["lots", "Lots"]
+    ]
+end function
+
 ' key = creature kind used by the scene, label = what the user sees
 function animalList() as object
     return [
@@ -53,13 +62,15 @@ function loadSettings() as object
     if sec.Exists("light") then light = sec.Read("light")
     clock = "off"
     if sec.Exists("clock") then clock = sec.Read("clock")
+    count = "lots"
+    if sec.Exists("count") then count = sec.Read("count")
     off = {}
     if sec.Exists("off") then
         for each k in sec.Read("off").Split(",")
             if k <> "" then off[k] = true
         end for
     end if
-    return { light: light, off: off, clock: clock }
+    return { light: light, off: off, clock: clock, count: count }
 end function
 
 sub saveSettings(st as object)
@@ -71,6 +82,7 @@ sub saveSettings(st as object)
     sec = CreateObject("roRegistrySection", "CoralReef")
     sec.Write("light", st.light)
     sec.Write("clock", st.clock)
+    if st.count <> invalid then sec.Write("count", st.count)
     sec.Write("off", s)
     sec.Flush()
 end sub

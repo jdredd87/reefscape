@@ -242,9 +242,11 @@ asset('tang_body', 262, 182, () => {
     <ellipse cx="150" cy="46" rx="80" ry="10" fill="#fff" opacity=".3" filter="url(#b6)"/>
   </g>
   <path d="${body}" fill="none" stroke="#020a2a" stroke-width="2" opacity=".6"/>
-  ${fin('M190,98 C172,106 162,120 160,130 C176,124 188,112 196,102 Z', '#ffd84a', '#7a5a00', 1.5)}
   ${eye(224, 72, 7.5, '#1d2e70')}`;
 });
+// pectoral fins are separate moving parts, drawn at the offset given in Specs.brs
+asset('tang_pec', 40, 36, () => `<defs>${finRays('fr', 0.22, 0, 5)}</defs>
+  ${fin('M32,2 C14,10 4,24 2,34 C18,28 30,16 38,6 Z', '#ffd84a', '#7a5a00', 1.5)}`);
 asset('tang_tail', 82, 112, () => `<defs>${lin('y', [[0, '#ffcf1a'], [1, '#ffe46b']])}${finRays('fr', 0.18, 90, 5)}</defs>
   ${fin('M80,47 L10,5 C22,40 22,72 10,107 L80,65 Z', 'url(#y)', null)}
   <path d="M80,47 L10,5" stroke="#08102a" stroke-width="8" stroke-linecap="round"/><path d="M10,107 L80,65" stroke="#08102a" stroke-width="8" stroke-linecap="round"/>`);
@@ -260,10 +262,11 @@ asset('ytang_body', 222, 202, () => {
     <ellipse cx="130" cy="58" rx="60" ry="12" fill="#fff" opacity=".35" filter="url(#b6)"/></g>
   <path d="${body}" fill="none" stroke="#a87c00" stroke-width="1.8" opacity=".7"/>
   <ellipse cx="42" cy="100" rx="6" ry="2.5" fill="#fff"/>
-  ${fin('M168,104 C154,110 146,120 144,130 C158,124 168,114 174,106 Z', '#fff36b', '#c79a00', 1.4)}
   <path d="M214,100 L206,101" stroke="#7a5a00" stroke-width="2"/>
   ${eye(180, 74, 7, '#3b2a00')}`;
 });
+asset('ytang_pec', 34, 30, () => `<defs>${finRays('fr', 0.16, 0, 5)}</defs>
+  ${fin('M26,2 C12,8 4,18 2,28 C16,22 26,12 32,4 Z', '#fff36b', '#c79a00', 1.4)}`);
 asset('ytang_tail', 72, 110, () => `<defs>${lin('y', [[0, '#ffd000'], [1, '#ffe760']])}${finRays('fr', 0.16, 90, 5)}</defs>
   ${fin('M70,48 C50,40 30,10 8,6 C18,40 18,70 8,104 C30,100 50,70 70,62 Z', 'url(#y)', '#c79a00', 2)}`);
 
@@ -288,9 +291,10 @@ asset('angel_body', 250, 212, () => {
     <ellipse cx="120" cy="52" rx="60" ry="10" fill="#fff" opacity=".25" filter="url(#b6)"/>
   </g>
   <path d="${body}" fill="none" stroke="#050b2a" stroke-width="2" opacity=".7"/>
-  ${fin('M176,112 C160,120 150,132 148,144 C164,138 176,126 182,116 Z', '#0a1233', '#ffd23a', 2)}
   ${eye(192, 84, 7, '#9fc4ff')}`;
 });
+asset('angel_pec', 38, 36, () => `<defs>${finRays('fr', 0.18, 0, 5)}</defs>
+  ${fin('M30,2 C14,10 4,22 2,34 C18,28 30,16 36,6 Z', '#0a1233', '#ffd23a', 2)}`);
 asset('angel_tail', 72, 100, () => `<defs>${lin('y', [[0, '#ffc21a'], [1, '#ffdf5a']])}${finRays('fr', 0.2, 90, 5)}</defs>
   ${fin('M70,40 C50,30 30,5 10,8 C2,30 2,70 10,92 C30,95 50,70 70,60 Z', 'url(#y)', '#b88400', 2)}`);
 
@@ -313,7 +317,6 @@ asset('shark_body', 850, 320, () => {
   return `<defs>${lin('sk', [[0, '#34495a'], [0.45, '#5d7586'], [0.58, '#8fa3b0'], [0.66, '#e1e7eb'], [1, '#f5f7f8']])}
     ${tipGrad('dg', 525, 100, 462, 8)}${tipGrad('pg', 600, 205, 490, 306)}${tipGrad('fg', 610, 205, 570, 280)}
     <clipPath id="bc"><path d="${body}"/></clipPath>${blur('b10', 10)}${blur('b2', 2)}</defs>
-  <path d="M640,205 C630,235 600,262 570,280 C585,250 590,228 590,212 Z" fill="url(#fg)" opacity=".9"/>
   <path d="M575,100 C545,45 505,18 462,6 C468,40 470,78 448,106 Z" fill="url(#dg)"/>
   <path d="M235,132 C225,112 212,102 196,98 C200,112 200,124 192,138 Z" fill="#40576a"/>
   <path d="${body}" fill="url(#sk)"/>
@@ -323,13 +326,18 @@ asset('shark_body', 850, 320, () => {
     <g fill="none" stroke="#2a3a47" stroke-width="2.6" opacity=".55" stroke-linecap="round">${gills}</g>
   </g>
   <path d="${body}" fill="none" stroke="#1d2a33" stroke-width="1.5" opacity=".5"/>
-  <path d="M615,200 C595,240 545,282 490,306 C522,262 530,232 528,212 Z" fill="url(#pg)"/>
   <path d="M300,212 C288,232 268,248 248,254 C258,238 262,226 262,212 Z" fill="#4a6273"/>
   <path d="M185,196 C175,212 162,222 148,226 C155,214 158,204 156,193 Z" fill="#4a6273"/>
   <path d="M800,190 C780,199 752,202 730,197" fill="none" stroke="#2a3540" stroke-width="2.2" opacity=".6"/>
   <circle cx="768" cy="146" r="6.5" fill="#0b1014"/><circle cx="770" cy="144" r="1.8" fill="#fff" opacity=".8"/>
   <path d="M808,152 C812,150 816,151 818,153" stroke="#1a232a" stroke-width="2" fill="none" opacity=".6"/>`;
 });
+// pectoral fins: near one (over the body) and far one (behind it), moving parts
+const sharkTip = (id, x1, y1, x2, y2) => lin(id, [[0, '#4d6679'], [0.72, '#3f5668'], [0.84, '#141c22'], [1, '#0a0f13']], x1, y1, x2, y2, 'gradientUnits="userSpaceOnUse"');
+asset('shark_pec', 134, 114, () => `<defs>${sharkTip('pg', 114, 9, 4, 110)}</defs>
+  <path d="M129,4 C109,44 59,86 4,110 C36,66 44,36 42,16 Z" fill="url(#pg)"/>`);
+asset('shark_pecf', 78, 83, () => `<defs>${sharkTip('fg', 44, 4, 4, 79)}</defs>
+  <path d="M74,4 C64,34 34,61 4,79 C19,49 24,27 24,11 Z" fill="url(#fg)" opacity=".9"/>`);
 asset('shark_tail', 272, 320, () => `<defs>${lin('t', [[0, '#3b5163'], [0.6, '#52697b'], [1, '#2e3f4c']])}
   ${lin('tip', [[0, '#000', 0], [0.75, '#000', 0], [1, '#0a0f13', 0.9]], 1, 0, 0, 0)}</defs>
   <path d="M270,145 C210,120 110,50 20,8 C50,70 80,120 120,160 C90,200 70,250 65,295 C130,255 210,200 270,180 Z" fill="url(#t)"/>
@@ -451,9 +459,11 @@ asset('whale', 1300, 430, () => {
   <path d="M480,178 C452,154 430,156 410,184 Z" fill="#1d3346"/>
   <path d="${d}" fill="url(#w)"/>
   <g clip-path="url(#c)"><g fill="none" stroke="#8aa3b3" stroke-width="2.5" opacity=".45">${grooves}</g><g fill="#2a4255">${knobs}</g></g>
-  <path d="M930,288 C870,350 760,404 610,426 C690,390 790,338 840,286 Z" fill="#7d97a8"/>
   <circle cx="1180" cy="214" r="5" fill="#0e1a24"/></g>`;
 }, 0.5);
+// the humpback's long flipper, a moving part
+asset('whale_fin', 328, 148, () => `<defs>${blur('b1', 1.5)}</defs>
+  <path d="M324,6 C264,68 154,122 4,144 C84,108 184,56 234,4 Z" fill="#7d97a8" filter="url(#b1)"/>`, 0.5);
 
 // ===== MORE CREATURES =====
 function normalsOf(pts) {
@@ -529,10 +539,11 @@ asset('dolphin_body', 540, 200, () => {
   <g clip-path="url(#c)"><ellipse cx="360" cy="76" rx="150" ry="10" fill="#fff" opacity=".3" filter="url(#b8)"/></g>
   <path d="${body}" fill="none" stroke="#2c3a44" stroke-width="1.4" opacity=".55"/>
   <path d="M535,119 C515,124 495,126 476,121" fill="none" stroke="#2c3a44" stroke-width="2" opacity=".7"/>
-  <path d="M400,140 C390,165 365,185 338,192 C352,170 360,155 362,140 Z" fill="url(#fin)"/>
   <circle cx="455" cy="108" r="4.5" fill="#0c1216"/><circle cx="456.5" cy="106.5" r="1.4" fill="#fff"/>
   <path d="M426,66 C430,64 434,64 438,66" stroke="#2c3a44" stroke-width="2" fill="none" opacity=".6"/>`;
 });
+asset('dolphin_pec', 68, 58, () => `<defs>${lin('fin', [[0, '#5d7080'], [1, '#3e4f5c']])}</defs>
+  <path d="M64,2 C54,27 29,47 2,54 C16,32 24,17 26,2 Z" fill="url(#fin)"/>`);
 asset('dolphin_tail', 140, 130, () => `<defs>${lin('t', [[0, '#55697a'], [1, '#3c4c58']])}</defs>
   <path d="M136,55 C110,50 70,30 20,6 C30,30 50,50 60,62 C50,74 30,94 20,118 C70,94 110,74 136,69 Z" fill="url(#t)"/>`);
 
@@ -966,7 +977,7 @@ const list = sizesOnly ? [] : only.length ? assets.filter((a) => only.includes(a
 if ((!only.length && !sizesOnly) || only.includes('caustics')) { caustics('caustics_a', 11); caustics('caustics_b', 29); }
 const profile = path.join(TMP, 'chrome-profile');
 // Roku can't mirror images with negative scale, so creatures also get a pre-flipped "_l" (facing left) copy.
-const MIRROR = new Set(['clown_body', 'clown_tail', 'clown_pec','tang_body', 'tang_tail', 'ytang_body', 'ytang_tail', 'angel_body', 'angel_tail',
+const MIRROR = new Set(['clown_body', 'clown_tail', 'clown_pec', 'tang_pec', 'ytang_pec', 'angel_pec', 'shark_pec', 'shark_pecf', 'dolphin_pec', 'whale_fin', 'tang_body', 'tang_tail', 'ytang_body', 'ytang_tail', 'angel_body', 'angel_tail',
   'school_fish', 'shark_body', 'shark_tail', 'turtle_body', 'turtle_flipper', 'turtle_rear', 'manta', 'whale',
   'octo_body', 'octo_arms', 'dolphin_body', 'dolphin_tail', 'lion_body', 'lion_fin', 'lion_tail', 'seahorse', 'seahorse_fin', 'crab_legs', 'diver_body', 'diver_leg', 'shrimp', 'shrimp_finger']);
 const jobs = [];
@@ -984,9 +995,19 @@ for (const a of jobs) {
   fs.writeFileSync(svgFile, svg);
   const html = path.join(TMP, a.name + '.html');
   fs.writeFileSync(html, `<!doctype html><html><head><style>html,body{margin:0;padding:0;background:transparent;overflow:hidden}svg{display:block}</style></head><body>${svg}</body></html>`);
-  execFileSync(CHROME, ['--headless=new', '--disable-gpu', '--hide-scrollbars', '--force-device-scale-factor=1',
-    '--default-background-color=00000000', `--user-data-dir=${profile}`, `--window-size=${W},${H}`,
-    `--screenshot=${png}`, 'file:///' + html.replace(/\\/g, '/')], { stdio: 'ignore' });
+  // headless Chrome now and then hangs on a screenshot: give up after 30 s and try again with a fresh
+  // profile (the hung instance keeps the old one locked)
+  for (let attempt = 1; ; attempt++) {
+    try {
+      execFileSync(CHROME, ['--headless=new', '--disable-gpu', '--hide-scrollbars', '--force-device-scale-factor=1',
+        '--default-background-color=00000000', `--user-data-dir=${attempt === 1 ? profile : profile + '-retry' + attempt}`, `--window-size=${W},${H}`,
+        `--screenshot=${png}`, 'file:///' + html.replace(/\\/g, '/')], { stdio: 'ignore', timeout: 30000 });
+      break;
+    } catch (e) {
+      if (attempt >= 3) throw e;
+      console.log(`${a.name}: Chrome timed out, retrying`);
+    }
+  }
   const buf = fs.readFileSync(png);
   const w = buf.readUInt32BE(16), h = buf.readUInt32BE(20);
   console.log(`${a.name.padEnd(16)} ${w}x${h}${w !== W || h !== H ? '  <-- SIZE MISMATCH' : ''}`);

@@ -11,7 +11,8 @@ plankton and jellyfish glow, reef fish shelter and octopus/sharks/lionfish come 
 
 **Settings:** Settings > Theme > Screensavers > Reefscape > *Custom settings* (or press * when
 running it as an app): lighting mode (clock / always day / sunset / night / fast cycle), an optional
-clock (time, date or both; it hops corners every few minutes to avoid burn-in) and a checklist of which animals
+clock (time, date or both; it hops corners every few minutes to avoid burn-in), how many animals swim at once
+(a few / some / lots: a third, two thirds or all of the reef-fish slots) and a checklist of which animals
 (plus Scuba Steve the diver and the fishing hook) appear. Saved in the registry section `CoralReef` (the old name, kept so saved settings survive the rename).
 
 ## Build & install
@@ -26,7 +27,7 @@ Run these from **PowerShell** (Git Bash's `tar` can't create the zip).
 Launch options for testing (`.\tools\roku.ps1 log -Launch "..."`): `hour=21.5` (start at a time of day),
 `demo=1` (whole day in 4 minutes), `settings=1` (open the settings panel),
 `off=shark%2Ceel` (save that list of disabled animals; `off=none` turns all back on),
-`clock=both` (show the clock this run), `fish=1` (fishing event in 2 s), `diver=1` (send the diver now), `shrimp=1` (shrimp pops out now),
+`clock=both` (show the clock this run), `count=few|some|lots` (save the animal count setting), `fish=1` (fishing event in 2 s), `diver=1` (send the diver now), `shrimp=1` (shrimp pops out now),
 `shark=1` (a close-up shark pass in 2 s, to see fish scatter), `spawn=1` (treat tonight as a full-moon coral spawning night; use with `hour=22`),
 `quality=0|1|2` (force minimal / reduced / full quality; the probe then measures every 5 s and only reports),
 `hide=surfaceGroup%2Crays` (hide nodes by id, to find which layer causes a drawing problem). `setscene=1` opens the screensaver's Custom settings screen. Combine with `&`.

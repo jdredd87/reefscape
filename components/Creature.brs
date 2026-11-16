@@ -453,7 +453,34 @@ end sub
 sub startBob(cfg as object, spec as object, root as object)
     home = [cfg.home[0] - spec.cx, cfg.home[1] - spec.cy]
     root.translation = home
-    m.anims.Push(addLoopVec(m.top, root.id, "translation", home, [rnd(4, 9), rnd(10, 18)], rnd(5, 8), rnd(0, 6.28)))
+    if cfg.range <> invalid then
+        ' drift slowly around home in a lazy figure-eight, always facing the same way (seahorses)
+        r = cfg.range
+        per = 30.0
+        if cfg.period <> invalid then per = cfg.period * rnd(0.9, 1.1)
+        ph = rnd(0, 6.28)
+        keys = []
+        pts = []
+        for i = 0 to 32
+            t = i / 32
+            a = t * 6.2831853
+            keys.Push(t)
+            pts.Push([home[0] + r * Sin(a + ph), home[1] + r * 0.45 * Sin(2 * a + ph) + 10 * Sin(5 * a)])
+        end for
+        anim = m.top.CreateChild("Animation")
+        anim.duration = per
+        anim.easeFunction = "linear"
+        anim.repeat = true
+        posI = anim.CreateChild("Vector2DFieldInterpolator")
+        posI.key = keys
+        posI.keyValue = pts
+        posI.fieldToInterp = root.id + ".translation"
+        root.translation = pts[0]
+        anim.control = "start"
+        m.anims.Push(anim)
+    else
+        m.anims.Push(addLoopVec(m.top, root.id, "translation", home, [rnd(4, 9), rnd(10, 18)], rnd(5, 8), rnd(0, 6.28)))
+    end if
     m.anims.Push(addLoopFloat(m.top, root.id, "rotation", 0, rnd(0.04, 0.08), rnd(6, 9), rnd(0, 6.28)))
 end sub
 

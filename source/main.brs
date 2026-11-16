@@ -23,6 +23,12 @@ sub RunScreenSaverSettings()
 end sub
 
 sub showOcean(args as object)
+    ' count=few|some|lots: save the animal count setting before the scene reads it
+    if args <> invalid and args.count <> invalid then
+        sec = CreateObject("roRegistrySection", "CoralReef")
+        sec.Write("count", args.count)
+        sec.Flush()
+    end if
     ' quit=1: exit right away, without loading anything (lets test scripts leave the TV on the home screen)
     if args <> invalid and args.quit <> invalid then return
     screen = CreateObject("roSGScreen")
