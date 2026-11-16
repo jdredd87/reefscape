@@ -1258,8 +1258,9 @@ sub buildSlots()
     addLayer("near", m.amp.near, 3, nearKinds, nearNight, 0.74, 0.92, 110, 760)
 
     ' seahorses clinging near the corals
-    addSlot({ layer: "near", amp: m.amp.near, kinds: ["seahorse"], dmin: 0.8, dmax: 0.8, ymin: 0, ymax: 0, mode: "bob", home: [1790, 690] })
-    addSlot({ layer: "near", amp: m.amp.near, kinds: ["seahorse"], dmin: 0.75, dmax: 0.75, ymin: 0, ymax: 0, mode: "bob", home: [330, 735] })
+    ' they paddle slowly back and forth around their home, turning at each end
+    addSlot({ layer: "near", amp: m.amp.near, kinds: ["seahorse"], dmin: 0.8, dmax: 0.8, ymin: 0, ymax: 0, mode: "hover", home: [1790, 690], range: 70, period: 34 })
+    addSlot({ layer: "near", amp: m.amp.near, kinds: ["seahorse"], dmin: 0.75, dmax: 0.75, ymin: 0, ymax: 0, mode: "hover", home: [330, 735], range: 90, period: 40 })
 
     ' a scuba diver far in the background, once in a while
     m.diverSlot = m.slots.Count()
@@ -1382,6 +1383,7 @@ sub spawnSlot(i as integer, initial as boolean)
             delay: k * rnd(0.4, 0.9)
             home: sl.home
             range: sl.range
+            period: sl.period
             ymin: sl.ymin
             ymax: sl.ymax
         }

@@ -214,13 +214,15 @@ asset('clown_body', 235, 145, () => {
     <ellipse cx="135" cy="44" rx="70" ry="9" fill="#fff" opacity=".35" filter="url(#b6)"/>
   </g>
   <path d="${body}" fill="none" stroke="#1a0a00" stroke-width="2" opacity=".7"/>
-  ${''/* pelvic fin hangs below the belly under the head band; pectoral fin sits in the orange just behind the head band */}
+  ${''/* pelvic fin hangs below the belly under the head band; the pectoral fin is its own moving part (clown_pec) */}
   ${fin('M156,114 C154,128 146,138 134,142 C138,130 142,120 144,112 Z', '#ff8a1a', '#111', 2.5)}
-  ${fin('M151,78 C142,82 133,92 129,104 C140,104 149,98 153,92 Z', '#ff9a33', '#111', 2.5)}
   <path d="M220,78 C215,82 210,82 205,80" stroke="#5a2400" stroke-width="2" fill="none"/>
   ${eye(198, 60, 8, '#ff9d3c')}`;
 });
-asset('clown_tail', 72, 100, () => `<defs>${lin('or', [[0, '#f26a00'], [1, '#ffab45']])}${finRays('fr', 0.22, 90, 5)}</defs>
+// pectoral fin, drawn at the body's (126,74); it sits in the orange just behind the head band and paddles
+asset('clown_pec', 32, 34, () => `<defs>${finRays('fr', 0.18, 0, 5)}</defs>
+  ${fin('M25,4 C16,8 7,18 3,30 C14,30 23,24 27,18 Z', '#ff9a33', '#111', 2.5)}`);
+asset('clown_tail', 72, 100,() => `<defs>${lin('or', [[0, '#f26a00'], [1, '#ffab45']])}${finRays('fr', 0.22, 90, 5)}</defs>
   ${fin('M70,40 C50,30 30,5 10,8 C2,30 2,70 10,92 C30,95 50,70 70,60 Z', 'url(#or)', '#111', 4)}
   <path d="M14,14 C7,35 7,65 14,86" stroke="#fff" stroke-width="3" fill="none" opacity=".8"/>`);
 
@@ -905,8 +907,9 @@ asset('rock', 572, 325, () => {
   <path d="${smooth(pts, true)}" fill="url(#r)"/><g clip-path="url(#c)">${spots}
     <ellipse cx="119" cy="170" rx="64" ry="49" fill="#2a3c40" opacity=".8"/><ellipse cx="120" cy="172" rx="58" ry="44" fill="url(#cave)"/>
     <path d="M62,166 C72,126 162,122 180,162" fill="none" stroke="#8fa8a6" stroke-width="4" opacity=".5"/></g>
-  ${branchy(300, 110, { len: 22, w: 6, depth: 3, spread: 0.5, split: 2, trunks: 3, fanOut: 0.5 }, ['#7a2a4a', '#d0507c', '#ff9fc0', '#ffd0e0']).svg}
-  ${brainCoral(250, 72, 50, 36, ['#4a6a2e', '#7a9a4a', '#b8d486'], '#3a5020')}</g>`;
+  ${''/* brain coral sits on the rock's crown, the pink sea fan further down the slope in front of it */}
+  ${brainCoral(214, 62, 46, 40, ['#4a6a2e', '#7a9a4a', '#b8d486'], '#3a5020')}
+  ${branchy(312, 112, { len: 22, w: 6, depth: 3, spread: 0.5, split: 2, trunks: 3, fanOut: 0.5 }, ['#7a2a4a', '#d0507c', '#ff9fc0', '#ffd0e0']).svg}</g>`;
 });
 
 asset('bubble', 64, 64, () => `<defs>${rad('b', [[0, '#fff', 0.05], [0.75, '#dff8ff', 0.18], [0.95, '#fff', 0.85], [1, '#fff', 0]])}</defs>
@@ -963,7 +966,7 @@ const list = sizesOnly ? [] : only.length ? assets.filter((a) => only.includes(a
 if ((!only.length && !sizesOnly) || only.includes('caustics')) { caustics('caustics_a', 11); caustics('caustics_b', 29); }
 const profile = path.join(TMP, 'chrome-profile');
 // Roku can't mirror images with negative scale, so creatures also get a pre-flipped "_l" (facing left) copy.
-const MIRROR = new Set(['clown_body', 'clown_tail', 'tang_body', 'tang_tail', 'ytang_body', 'ytang_tail', 'angel_body', 'angel_tail',
+const MIRROR = new Set(['clown_body', 'clown_tail', 'clown_pec','tang_body', 'tang_tail', 'ytang_body', 'ytang_tail', 'angel_body', 'angel_tail',
   'school_fish', 'shark_body', 'shark_tail', 'turtle_body', 'turtle_flipper', 'turtle_rear', 'manta', 'whale',
   'octo_body', 'octo_arms', 'dolphin_body', 'dolphin_tail', 'lion_body', 'lion_fin', 'lion_tail', 'seahorse', 'seahorse_fin', 'crab_legs', 'diver_body', 'diver_leg', 'shrimp', 'shrimp_finger']);
 const jobs = [];

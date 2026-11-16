@@ -225,7 +225,8 @@ sub buildParts(parent as object, spec as object, p as string, depth as float, di
         kind = ""
         if part.anim <> invalid then kind = part.anim
         if kind = "rot" then
-            m.anims.Push(addLoopFloat(m.top, po.id, "rotation", base, part.amp, part.period / speedK, phase + off))
+            ' mirrored parts swing the mirrored way, so a turning fish's two facings match at the swap
+            m.anims.Push(addLoopFloat(m.top, po.id, "rotation", base, part.amp * dir, part.period / speedK, phase + off))
             ' rotating parts can also stretch (a sea star's arm reaching and pulling in); sph = its phase lead
             if part.samp <> invalid then
                 sph = 0.0
@@ -349,6 +350,7 @@ sub startHover(cfg as object, spec as object, root as object, p as string, sY as
     pts = [a, [hx - r * 0.5, a[1] - 22], [hx, hy - 34], [hx + r * 0.5, b[1] - 18], b, [b[0] + 6, b[1] + 4], [hx + r * 0.5, b[1] + 16], [hx, hy + 20], [hx - r * 0.5, a[1] + 14], a, a]
     anim = m.top.CreateChild("Animation")
     anim.duration = rnd(13, 18)
+    if cfg.period <> invalid then anim.duration = cfg.period * rnd(0.9, 1.1)
     anim.easeFunction = "linear"
     anim.repeat = true
     posI = anim.CreateChild("Vector2DFieldInterpolator")
@@ -370,6 +372,18 @@ sub startHover(cfg as object, spec as object, root as object, p as string, sY as
     opL.key = ok
     opL.keyValue = [0, 0, 1, 1, 0, 0]
     opL.fieldToInterp = p + "gL.opacity"
+    ' the tail folds in toward the body through each turn; at full width it would stick out past the
+    ' squeezed body as a separate sliver and look detached for a moment
+    for each part in spec.parts
+        if part.id = "tail" then
+            for each side in ["R", "L"]
+                ti = anim.CreateChild("Vector2DFieldInterpolator")
+                ti.key = [0, 0.43, 0.475, 0.51, 0.93, 0.975, 1]
+                ti.keyValue = [[1, 1], [1, 1], [0.15, 0.7], [1, 1], [1, 1], [0.15, 0.7], [1, 1]]
+                ti.fieldToInterp = p + side + "tail.scale"
+            end for
+        end if
+    end for
     root.translation = a
     anim.control = "start"
     m.anims.Push(anim)

@@ -13,6 +13,8 @@ function imageSizes() as object
         "caustics_b": [1024, 256]
         "clown_body": [235, 145]
         "clown_body_l": [235, 145]
+        "clown_pec": [32, 34]
+        "clown_pec_l": [32, 34]
         "clown_tail": [72, 100]
         "clown_tail_l": [72, 100]
         "coral_brain": [320, 200]

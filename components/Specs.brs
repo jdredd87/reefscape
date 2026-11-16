@@ -12,6 +12,7 @@ function getSpecs() as object
         clown: { cx: 117, cy: 72, minX: -48, maxX: 235, scale: 0.85, speed: 100, bob: 30, parts: [
             { id: "tail", uri: "clown_tail", w: 72, x: -48, y: 24, px: 70, py: 50, anim: "rot", amp: 0.3, period: 0.45 }
             { id: "body", uri: "clown_body", w: 235, x: 0, y: 0 }
+            { id: "pec", uri: "clown_pec", w: 32, x: 126, y: 74, px: 26, py: 11, anim: "rot", amp: 0.3, period: 0.4, po: 1.0, samp: [-0.3, 0], sph: 1.57 }
         ] }
         tang: { prey: true, cx: 130, cy: 90, minX: -46, maxX: 262, scale: 0.85, speed: 120, bob: 35, parts: [
             { id: "tail", uri: "tang_tail", w: 82, x: -46, y: 34, px: 80, py: 56, anim: "rot", amp: 0.25, period: 0.5 }
@@ -59,7 +60,7 @@ function getSpecs() as object
             { id: "tail", uri: "dolphin_tail", w: 140, x: -88, y: 59, px: 136, py: 62, anim: "rot", amp: 0.3, period: 0.8 }
             { id: "body", uri: "dolphin_body", w: 540, x: 0, y: 0 }
         ] }
-        seahorse: { cx: 65, cy: 115, minX: -10, maxX: 130, scale: 0.85, speed: 0, bob: 0, parts: [
+        seahorse: { cx: 65, cy: 115, minX: -10, maxX: 130, scale: 0.85, speed: 0, bob: 0, sway: 0.07, swayPeriod: 5, parts: [
             { id: "fin", uri: "seahorse_fin", w: 44, x: -10, y: 78, px: 42, py: 22, anim: "scale", samp: [-0.4, 0], period: 0.25 }
             { id: "body", uri: "seahorse", w: 130, x: 0, y: 0 }
         ] }
