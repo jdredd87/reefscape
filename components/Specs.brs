@@ -31,9 +31,10 @@ function getSpecs() as object
         ] }
         shark: { cx: 400, cy: 165, minX: -220, maxX: 850, scale: 0.75, speed: 150, bob: 40, sway: 0.015, swayPeriod: 1.5, parts: [
             { id: "tail", uri: "shark_tail", w: 272, x: -220, y: 4, px: 270, py: 162, anim: "rot", amp: 0.16, period: 1.5 }
-            { id: "pecf", uri: "shark_pecf", w: 78, x: 566, y: 201, px: 50, py: 7, anim: "rot", amp: 0.08, period: 3.0, po: 1.2 }
+            { id: "dorsal", uri: "shark_dorsal", w: 136, x: 444, y: 2, px: 70, py: 104, anim: "rot", amp: 0.06, period: 1.5, po: 0.6 }
+            { id: "pecf", uri: "shark_pecf", w: 78, x: 566, y: 201, px: 50, py: 7, anim: "rot", amp: 0.16, period: 2.4, po: 1.2 }
             { id: "body", uri: "shark_body", w: 850, x: 0, y: 0 }
-            { id: "pec", uri: "shark_pec", w: 134, x: 486, y: 196, px: 95, py: 10, anim: "rot", amp: 0.08, period: 3.0, po: 1.0 }
+            { id: "pec", uri: "shark_pec", w: 134, x: 486, y: 196, px: 95, py: 10, anim: "rot", amp: 0.16, period: 2.4, po: 1.0 }
         ] }
         turtle: { cx: 300, cy: 160, minX: -22, maxX: 590, scale: 0.7, speed: 65, bob: 35, parts: [
             { id: "ffar", uri: "turtle_flipper", w: 290, x: 153, y: 134, px: 275, py: 30, anim: "rot", amp: 0.38, period: 3.4, po: 0.4, dark: 0.6 }
@@ -64,8 +65,9 @@ function getSpecs() as object
         ] }
         dolphin: { cx: 230, cy: 110, minX: -88, maxX: 540, scale: 0.8, speed: 260, bob: 70, sway: 0.02, swayPeriod: 0.8, parts: [
             { id: "tail", uri: "dolphin_tail", w: 140, x: -88, y: 59, px: 136, py: 62, anim: "rot", amp: 0.3, period: 0.8 }
+            { id: "dorsal", uri: "dolphin_dorsal", w: 70, x: 264, y: 2, px: 36, py: 66, anim: "rot", amp: 0.08, period: 0.8, po: 0.6 }
             { id: "body", uri: "dolphin_body", w: 540, x: 0, y: 0 }
-            { id: "pec", uri: "dolphin_pec", w: 68, x: 336, y: 138, px: 45, py: 3, anim: "rot", amp: 0.14, period: 1.6, po: 1.0 }
+            { id: "pec", uri: "dolphin_pec", w: 68, x: 336, y: 138, px: 45, py: 3, anim: "rot", amp: 0.3, period: 1.2, po: 1.0 }
         ] }
         seahorse: { cx: 65, cy: 115, minX: -10, maxX: 130, scale: 0.85, speed: 0, bob: 0, parts: [
             { id: "fin", uri: "seahorse_fin", w: 44, x: -10, y: 78, px: 42, py: 22, anim: "scale", samp: [-0.4, 0], period: 0.25 }

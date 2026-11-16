@@ -317,7 +317,6 @@ asset('shark_body', 850, 320, () => {
   return `<defs>${lin('sk', [[0, '#34495a'], [0.45, '#5d7586'], [0.58, '#8fa3b0'], [0.66, '#e1e7eb'], [1, '#f5f7f8']])}
     ${tipGrad('dg', 525, 100, 462, 8)}${tipGrad('pg', 600, 205, 490, 306)}${tipGrad('fg', 610, 205, 570, 280)}
     <clipPath id="bc"><path d="${body}"/></clipPath>${blur('b10', 10)}${blur('b2', 2)}</defs>
-  <path d="M575,100 C545,45 505,18 462,6 C468,40 470,78 448,106 Z" fill="url(#dg)"/>
   <path d="M235,132 C225,112 212,102 196,98 C200,112 200,124 192,138 Z" fill="#40576a"/>
   <path d="${body}" fill="url(#sk)"/>
   <g clip-path="url(#bc)">
@@ -336,6 +335,9 @@ asset('shark_body', 850, 320, () => {
 const sharkTip = (id, x1, y1, x2, y2) => lin(id, [[0, '#4d6679'], [0.72, '#3f5668'], [0.84, '#141c22'], [1, '#0a0f13']], x1, y1, x2, y2, 'gradientUnits="userSpaceOnUse"');
 asset('shark_pec', 134, 114, () => `<defs>${sharkTip('pg', 114, 9, 4, 110)}</defs>
   <path d="M129,4 C109,44 59,86 4,110 C36,66 44,36 42,16 Z" fill="url(#pg)"/>`);
+// dorsal fin, behind the body; its base runs down into the body so no gap shows as it flexes
+asset('shark_dorsal', 136, 120, () => `<defs>${sharkTip('dg', 81, 98, 18, 6)}</defs>
+  <path d="M131,98 C101,43 61,16 18,4 C24,38 26,76 4,104 L4,118 L131,118 Z" fill="url(#dg)"/>`);
 asset('shark_pecf', 78, 83, () => `<defs>${sharkTip('fg', 44, 4, 4, 79)}</defs>
   <path d="M74,4 C64,34 34,61 4,79 C19,49 24,27 24,11 Z" fill="url(#fg)" opacity=".9"/>`);
 asset('shark_tail', 272, 320, () => `<defs>${lin('t', [[0, '#3b5163'], [0.6, '#52697b'], [1, '#2e3f4c']])}
@@ -534,7 +536,6 @@ asset('octo_arms', 300, 160, () => {
 asset('dolphin_body', 540, 200, () => {
   const body = 'M535,118 C528,108 505,100 485,98 C470,80 440,66 400,62 C330,56 240,64 160,84 C110,96 70,108 40,114 L40,128 C80,132 120,140 170,146 C260,158 360,160 430,150 C470,144 500,136 515,130 C525,126 534,124 535,118 Z';
   return `<defs>${lin('d', [[0, '#4a5c6b'], [0.5, '#748897'], [0.63, '#b3c2cc'], [0.72, '#e6ecf0'], [1, '#f4f7f8']])}${lin('fin', [[0, '#5d7080'], [1, '#3e4f5c']])}<clipPath id="c"><path d="${body}"/></clipPath>${blur('b8', 8)}</defs>
-  <path d="M330,64 C320,30 300,10 268,4 C280,26 282,46 270,68 Z" fill="url(#fin)"/>
   <path d="${body}" fill="url(#d)"/>
   <g clip-path="url(#c)"><ellipse cx="360" cy="76" rx="150" ry="10" fill="#fff" opacity=".3" filter="url(#b8)"/></g>
   <path d="${body}" fill="none" stroke="#2c3a44" stroke-width="1.4" opacity=".55"/>
@@ -542,6 +543,8 @@ asset('dolphin_body', 540, 200, () => {
   <circle cx="455" cy="108" r="4.5" fill="#0c1216"/><circle cx="456.5" cy="106.5" r="1.4" fill="#fff"/>
   <path d="M426,66 C430,64 434,64 438,66" stroke="#2c3a44" stroke-width="2" fill="none" opacity=".6"/>`;
 });
+asset('dolphin_dorsal', 70, 82, () => `<defs>${lin('fin', [[0, '#5d7080'], [1, '#3e4f5c']])}</defs>
+  <path d="M66,62 C56,28 36,8 4,2 C16,24 18,44 6,66 L6,80 L66,80 Z" fill="url(#fin)"/>`);
 asset('dolphin_pec', 68, 58, () => `<defs>${lin('fin', [[0, '#5d7080'], [1, '#3e4f5c']])}</defs>
   <path d="M64,2 C54,27 29,47 2,54 C16,32 24,17 26,2 Z" fill="url(#fin)"/>`);
 asset('dolphin_tail', 140, 130, () => `<defs>${lin('t', [[0, '#55697a'], [1, '#3c4c58']])}</defs>
@@ -977,7 +980,7 @@ const list = sizesOnly ? [] : only.length ? assets.filter((a) => only.includes(a
 if ((!only.length && !sizesOnly) || only.includes('caustics')) { caustics('caustics_a', 11); caustics('caustics_b', 29); }
 const profile = path.join(TMP, 'chrome-profile');
 // Roku can't mirror images with negative scale, so creatures also get a pre-flipped "_l" (facing left) copy.
-const MIRROR = new Set(['clown_body', 'clown_tail', 'clown_pec', 'tang_pec', 'ytang_pec', 'angel_pec', 'shark_pec', 'shark_pecf', 'dolphin_pec', 'whale_fin', 'tang_body', 'tang_tail', 'ytang_body', 'ytang_tail', 'angel_body', 'angel_tail',
+const MIRROR = new Set(['clown_body', 'clown_tail', 'clown_pec', 'tang_pec', 'ytang_pec', 'angel_pec', 'shark_pec', 'shark_pecf', 'shark_dorsal', 'dolphin_pec', 'dolphin_dorsal', 'whale_fin', 'tang_body', 'tang_tail', 'ytang_body', 'ytang_tail', 'angel_body', 'angel_tail',
   'school_fish', 'shark_body', 'shark_tail', 'turtle_body', 'turtle_flipper', 'turtle_rear', 'manta', 'whale',
   'octo_body', 'octo_arms', 'dolphin_body', 'dolphin_tail', 'lion_body', 'lion_fin', 'lion_tail', 'seahorse', 'seahorse_fin', 'crab_legs', 'diver_body', 'diver_leg', 'shrimp', 'shrimp_finger']);
 const jobs = [];
