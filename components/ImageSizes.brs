@@ -73,6 +73,7 @@ function imageSizes() as object
         "school_fish_l": [122, 46]
         "seafan": [380, 420]
         "seagrass": [220, 240]
+        "seagrass_l": [220, 240]
         "seahorse": [130, 230]
         "seahorse_fin": [44, 44]
         "seahorse_fin_l": [44, 44]

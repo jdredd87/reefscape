@@ -982,7 +982,7 @@ const list = sizesOnly ? [] : only.length ? assets.filter((a) => only.includes(a
 if ((!only.length && !sizesOnly) || only.includes('caustics')) { caustics('caustics_a', 11); caustics('caustics_b', 29); }
 const profile = path.join(TMP, 'chrome-profile');
 // Roku can't mirror images with negative scale, so creatures also get a pre-flipped "_l" (facing left) copy.
-const MIRROR = new Set(['clown_body', 'clown_tail', 'clown_pec', 'tang_pec', 'ytang_pec', 'angel_pec', 'shark_pec', 'shark_pecf', 'shark_dorsal', 'dolphin_pec', 'dolphin_dorsal', 'whale_fin', 'tang_body', 'tang_tail', 'ytang_body', 'ytang_tail', 'angel_body', 'angel_tail',
+const MIRROR = new Set(['clown_body', 'clown_tail', 'clown_pec', 'seagrass', 'tang_pec', 'ytang_pec', 'angel_pec', 'shark_pec', 'shark_pecf', 'shark_dorsal', 'dolphin_pec', 'dolphin_dorsal', 'whale_fin', 'tang_body', 'tang_tail', 'ytang_body', 'ytang_tail', 'angel_body', 'angel_tail',
   'school_fish', 'shark_body', 'shark_tail', 'turtle_body', 'turtle_flipper', 'turtle_rear', 'manta', 'whale',
   'octo_body', 'octo_arms', 'dolphin_body', 'dolphin_tail', 'lion_body', 'lion_fin', 'lion_tail', 'seahorse', 'seahorse_fin', 'crab_legs', 'diver_body', 'diver_leg', 'shrimp', 'shrimp_finger']);
 const jobs = [];

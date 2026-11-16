@@ -256,7 +256,9 @@ sub buildDecor()
         { uri: "seafan", x: 1640, y: 495, rot: 0.025, period: 9, px: 190, py: 420 }
         { uri: "coral_stag", x: 110, y: 575 }
         { uri: "sponge", x: 435, y: 575 }
-        { uri: "seagrass", x: 650, y: 680, rot: 0.07, period: 4.5, px: 110, py: 240 }
+        ' seagrass on both sides of the anemone, behind it (the right one is the mirrored image)
+        { uri: "seagrass", x: 650, y: 695, rot: 0.07, period: 4.5, px: 110, py: 240 }
+        { uri: "seagrass_l", x: 895, y: 700, rot: 0.06, period: 5.1, px: 110, py: 240 }
         { uri: "anemone", x: 720, y: 690, sc: [0.03, -0.03], period: 5, px: 160, py: 240 }
         { uri: "coral_brain", x: 1010, y: 725 }
         { uri: "coral_stag2", x: 1290, y: 620 }
