@@ -45,6 +45,7 @@ sub showOcean(args as object)
         if args.fish <> invalid then scene.fishTest = true
         if args.diver <> invalid then scene.diverTest = true
         if args.shrimp <> invalid then scene.shrimpTest = true
+        if args.oyster <> invalid then scene.oysterTest = true
         if args.quality <> invalid then scene.quality = args.quality
         if args.spawn <> invalid then scene.spawnTest = true
         if args.shark <> invalid then scene.sharkTest = true
