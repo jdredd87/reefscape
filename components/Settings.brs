@@ -62,7 +62,8 @@ function loadSettings() as object
     if sec.Exists("light") then light = sec.Read("light")
     clock = "off"
     if sec.Exists("clock") then clock = sec.Read("clock")
-    count = "lots"
+    ' default: a few (a calmer reef); an older install that saved a choice keeps it
+    count = "few"
     if sec.Exists("count") then count = sec.Read("count")
     off = {}
     if sec.Exists("off") then

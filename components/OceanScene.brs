@@ -1119,9 +1119,9 @@ sub loadUserSettings()
     s = loadSettings()
     m.off = s.off
     ' how many fish slots are in use: 0 = a few, 1 = some, 2 = lots (all)
-    m.density = 2
-    if s.count = "few" then m.density = 0
+    m.density = 0
     if s.count = "some" then m.density = 1
+    if s.count = "lots" then m.density = 2
     m.clockMode = s.clock
     m.lightMode = s.light
     m.timeOffset = 0

@@ -12,7 +12,7 @@ plankton and jellyfish glow, reef fish shelter and octopus/sharks/lionfish come 
 **Settings:** Settings > Theme > Screensavers > Reefscape > *Custom settings* (or press * when
 running it as an app): lighting mode (clock / always day / sunset / night / fast cycle), an optional
 clock (time, date or both; it hops corners every few minutes to avoid burn-in), how many animals swim at once
-(a few / some / lots: a third, two thirds or all of the reef-fish slots) and a checklist of which animals
+(a few / some / lots: a third, two thirds or all of the reef-fish slots; a few by default) and a checklist of which animals
 (plus Scuba Steve the diver and the fishing hook) appear. Saved in the registry section `CoralReef` (the old name, kept so saved settings survive the rename).
 
 ## Build & install
