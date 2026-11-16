@@ -458,7 +458,9 @@ asset('whale', 1300, 430, () => {
   for (let k = 0; k < 9; k++) knobs += `<circle cx="${1120 + k * 18}" cy="${f(166 + k * 2.6)}" r="4"/>`;
   return `<defs>${lin('w', [[0, '#1d3346'], [0.6, '#2c4659'], [1, '#6f8a9c']])}<clipPath id="c"><path d="${d}"/></clipPath>${blur('b1', 1.5)}</defs>
   <g filter="url(#b1)">
-  <path d="M480,178 C452,154 430,156 410,184 Z" fill="#1d3346"/>
+  ${''/* the humpback's low hump with a small swept-back dorsal fin on it (bases hidden behind the body) */}
+  <path d="M640,156 C590,142 530,146 480,170 L640,172 Z" fill="#1f364a"/>
+  <path d="M524,170 C500,162 468,146 436,134 C440,150 440,168 428,190 Z" fill="#1d3346"/>
   <path d="${d}" fill="url(#w)"/>
   <g clip-path="url(#c)"><g fill="none" stroke="#8aa3b3" stroke-width="2.5" opacity=".45">${grooves}</g><g fill="#2a4255">${knobs}</g></g>
   <circle cx="1180" cy="214" r="5" fill="#0e1a24"/></g>`;
