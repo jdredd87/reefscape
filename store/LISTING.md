@@ -38,7 +38,8 @@ No account, no ads, no internet connection needed, and no data collected.
 - Sign-in required: No
 - Made for kids: No (general audience)
 - Age rating: suitable for all ages
-- Countries: your choice (for example United States, or all available)
+- Countries: United States (plus any others). Do not leave only "Rest of World": it excludes the US and the main Roku markets, so the app could not be found or added by access code (fixed 2026-11-17)
+- Domestic region: United States
 - Deep linking: not applicable (screensaver, no media)
 
 ## Artwork
