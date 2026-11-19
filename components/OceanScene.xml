@@ -40,7 +40,7 @@
     <Poster id="fog1" uri="pkg:/images/ocean/bg_water.png" width="8" height="1080" scale="[240,1]" opacity="0.38" />
 
     <Group id="camMid">
-      <Poster id="reefMid" translation="[-80,580]" scale="[1.0157,1]" />
+      <Poster id="reefMid" translation="[-80,580]" scale="[1.3543,1.3333]" />
       <Group id="midDecor" />
       <Group id="midCreatures" />
     </Group>

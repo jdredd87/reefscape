@@ -927,7 +927,7 @@ asset('reef_mid', 2048, 520, () => {
     else corals += tableCoral(x, y, rand(70, 120), col);
   }
   return `${rocks}${corals}`;
-});
+}, 0.75);
 
 asset('sand', 2048, 300, () => {
   const W = 2048, H = 300, top = [];

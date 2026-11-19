@@ -95,7 +95,7 @@ function imageSizes() as object
         "puffer_tail_l": [50, 70]
         "ray": [200, 550]
         "reef_far": [1000, 220]
-        "reef_mid": [2048, 520]
+        "reef_mid": [1536, 390]
         "rock": [572, 325]
         "sand": [2048, 300]
         "sand_front": [2048, 200]
