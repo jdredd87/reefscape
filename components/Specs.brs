@@ -104,15 +104,15 @@ function getSpecs() as object
         ' pufferfish (rare): crosses like any fish; only a shark coming close makes it puff into a spiky ball and float away
         puffer: { prey: true, puff: 6, cx: 120, cy: 120, minX: 0, maxX: 240, scale: 1.0, speed: 55, bob: 18, parts: [
             { id: "tail", uri: "puffer_tail", w: 50, x: 0, y: 85, px: 48, py: 35, anim: "rot", amp: 0.3, period: 0.5 }
-            { id: "body", uri: "puffer_body", w: 240, x: 0, y: 0 }
+            { id: "body", uri: "puffer_body", w: 240, h: 240, x: 0, y: 0 }
             { id: "pec", uri: "puffer_pec", w: 30, x: 109, y: 121, px: 25, py: 4, anim: "rot", amp: 0.35, period: 0.35, po: 1.0 }
             ' the inflating frames (fish .. spiky ball), invisible until a shark comes; shown in turn by puffUp in Creature.brs
-            { id: "f0", uri: "puffer_f0", w: 240, x: 0, y: 0, op: 0.0 }
-            { id: "f1", uri: "puffer_f1", w: 240, x: 0, y: 0, op: 0.0 }
-            { id: "f2", uri: "puffer_f2", w: 240, x: 0, y: 0, op: 0.0 }
-            { id: "f3", uri: "puffer_f3", w: 240, x: 0, y: 0, op: 0.0 }
-            { id: "f4", uri: "puffer_f4", w: 240, x: 0, y: 0, op: 0.0 }
-            { id: "f5", uri: "puffer_f5", w: 240, x: 0, y: 0, op: 0.0 }
+            { id: "f0", uri: "puffer_f0", w: 240, h: 240, x: 0, y: 0, op: 0.0 }
+            { id: "f1", uri: "puffer_f1", w: 240, h: 240, x: 0, y: 0, op: 0.0 }
+            { id: "f2", uri: "puffer_f2", w: 240, h: 240, x: 0, y: 0, op: 0.0 }
+            { id: "f3", uri: "puffer_f3", w: 240, h: 240, x: 0, y: 0, op: 0.0 }
+            { id: "f4", uri: "puffer_f4", w: 240, h: 240, x: 0, y: 0, op: 0.0 }
+            { id: "f5", uri: "puffer_f5", w: 240, h: 240, x: 0, y: 0, op: 0.0 }
         ] }
         ' Captain Greg's research submarine, far away like the diver; its headlight is the twin "sublight"
         sub: { cx: 330, cy: 150, minX: -6, maxX: 660, scale: 0.6, speed: 90, bob: 8, parts: [

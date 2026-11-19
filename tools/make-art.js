@@ -790,8 +790,8 @@ function pufferArt(t, whole) {
   <path d="M${mx},${f(my - 5)} C${f(mx - 7)},${f(my - 2)} ${f(mx - 7)},${f(my + 3)} ${mx},${f(my + 6)} Z" fill="#fff" stroke="#7a5a1c" stroke-width="1.5"/>
   ${eye(ex, ey, f(L(9, 11.5)), '#e8a020')}`;
 }
-asset('puffer_body', 240, 240, () => pufferArt(0, false));
-for (let i = 0; i < PUFF_FRAMES; i++) asset('puffer_f' + i, 240, 240, () => pufferArt(i / (PUFF_FRAMES - 1), true));
+asset('puffer_body', 240, 240, () => pufferArt(0, false), 0.75);
+for (let i = 0; i < PUFF_FRAMES; i++) asset('puffer_f' + i, 240, 240, () => pufferArt(i / (PUFF_FRAMES - 1), true), 0.75);
 asset('puffer_tail', 50, 70, () => `<defs>${finRays('fr', 0.2, 90, 5)}</defs>
   ${fin('M48,28 C34,24 20,8 6,6 C12,26 12,44 6,64 C20,62 34,46 48,42 Z', '#e9cf86', '#8a6a24', 1.6)}`);
 asset('puffer_pec', 30, 30, () => `<defs>${finRays('fr', 0.18, 0, 5)}</defs>
