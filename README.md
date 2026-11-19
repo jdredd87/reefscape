@@ -43,6 +43,7 @@ All art is generated: `node tools\make-art.js` draws every asset as SVG and rend
 `images\ocean\*.png` with headless Chrome (creatures also get a mirrored `_l` copy).
 Render just some assets with `node tools\make-art.js shark_body shark_tail`.
 `node tools\preview.js parts` builds a contact sheet in `out\preview-parts.png`.
+`node tools\make-splash.js` builds the loading screen (`images\splash_fhd.jpg`, `images\splash_hd.jpg`) from the first store screenshot.
 
 ## Code map
 | File | What it does |
@@ -70,6 +71,10 @@ and to `animalList()` in `Settings.brs` so it gets a checkbox.
 - On Roku OS 16 a sideloaded **developer** build (it has `title=` and `Main()`) hangs on the splash when opened from
   Settings > Theme > Screensavers > Reefscape > Custom settings: Roku starts it as an app and never calls `RunScreenSaverSettings`.
   The store build (`.uild.ps1 -Store`) opens it normally. To test that screen with the developer build, launch it with `setscene=1`.
+
+- Right after Reefscape is installed from the store, some Rokus show a home-screen tile for it until the next restart.
+  A store screensaver may not have `Main()` (Roku rule 4.5), so the tile can't start anything; the manifest's splash screen
+  tells the viewer to turn it on in Settings > Theme > Screensavers instead of showing a blank loading screen.
 
 ## Publishing (Roku Streaming Store)
 
