@@ -12,6 +12,8 @@
     <field id="clockTest" type="string" onChange="onClockTest" />
     <field id="fishTest" type="boolean" onChange="onFishTest" />
     <field id="diverTest" type="boolean" onChange="onDiverTest" />
+    <field id="showTest" type="string" onChange="onShowTest" />
+    <field id="seasonTest" type="string" onChange="onSeasonTest" />
     <field id="shrimpTest" type="boolean" onChange="onShrimpTest" />
     <field id="lowMemory" type="boolean" onChange="onLowMemory" />
     <field id="quality" type="string" onChange="onQuality" />
@@ -72,6 +74,10 @@
     <!-- Scuba Steve's torch beam at night: moves with the far layer, drawn above the night shade -->
     <Group id="camFarLight">
       <Group id="farLight" opacity="0" visible="false" />
+    </Group>
+    <!-- the anglerfish's glowing lure: moves with the middle layer -->
+    <Group id="camMidLight">
+      <Group id="midLight" opacity="0" visible="false" />
     </Group>
     <Group id="camGlow">
       <Group id="plankton" opacity="0" />

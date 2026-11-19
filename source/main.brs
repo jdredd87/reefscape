@@ -44,6 +44,8 @@ sub showOcean(args as object)
         if args.clock <> invalid then scene.clockTest = args.clock
         if args.fish <> invalid then scene.fishTest = true
         if args.diver <> invalid then scene.diverTest = true
+        if args.season <> invalid then scene.seasonTest = args.season
+        if args.show <> invalid then scene.showTest = args.show
         if args.shrimp <> invalid then scene.shrimpTest = true
         if args.quality <> invalid then scene.quality = args.quality
         if args.spawn <> invalid then scene.spawnTest = true

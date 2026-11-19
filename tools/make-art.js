@@ -735,7 +735,6 @@ asset('diver_body', 300, 130, () => {
   <g clip-path="url(#c)"><path d="M92,74 C140,70 200,70 258,66" stroke="#1e88c8" stroke-width="6" fill="none"/><rect x="112" y="40" width="12" height="60" fill="#3a444c"/><rect x="110" y="62" width="16" height="12" fill="#9aa4ac"/></g>
   <path d="M236,62 L204,88 L172,96" fill="none" stroke="#141c24" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
   <circle cx="170" cy="97" r="7" fill="#22303c"/>
-  <path d="M163,93 L181,97 L183,95 L187,103 L182,104 L181,102 L162,99 Z" fill="#f2b51e" stroke="#6a4a04" stroke-width="1.2"/>
   <circle cx="272" cy="62" r="19" fill="#141c24"/>
   <rect x="274" y="50" width="22" height="18" rx="5" fill="#8fdcff" opacity=".9" stroke="#0a0a0a" stroke-width="3"/>
   <path d="M279,54 L286,54" stroke="#fff" stroke-width="2" opacity=".8"/>
@@ -750,6 +749,96 @@ asset('diver_leg', 200, 60, () => `<defs>${finRays('fr', 0.25, 0, 6)}</defs>
 asset('diver_beam', 640, 300, () => `<defs>${blur('b', 7)}<linearGradient id="g" gradientUnits="userSpaceOnUse" x1="6" y1="90" x2="590" y2="204"><stop offset="0" stop-color="#f4fbff" stop-opacity=".75"/><stop offset=".25" stop-color="#dff3ff" stop-opacity=".42"/><stop offset=".7" stop-color="#c8eaff" stop-opacity=".14"/><stop offset="1" stop-color="#c8eaff" stop-opacity="0"/></linearGradient>${rad('s', [[0, '#ffffff', 1], [0.4, '#eaf7ff', 0.7], [1, '#eaf7ff', 0]])}</defs>
   <path d="M6,86 L620,128 C640,170 640,250 610,286 L6,94 Z" fill="url(#g)" filter="url(#b)"/>
   <circle cx="12" cy="91" r="11" fill="url(#s)"/>`, 0.5);
+// ---------- pufferfish: swims as a small boxy fish, then puffs into a spiky ball and floats away ----------
+const pufferSpots = (list, col = '#6b4a1c') => list.map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${col}" opacity=".55"/>`).join('');
+asset('puffer_body', 190, 140, () => {
+  const body = 'M184,70 C184,50 170,30 138,24 C100,18 60,30 40,52 L26,62 L26,80 L40,90 C60,114 100,124 138,116 C170,110 184,90 184,70 Z';
+  return `<defs>${lin('pb', [[0, '#b98a3a'], [0.5, '#e3c06a'], [0.75, '#f7ecc8'], [1, '#fffaf0']])}${shadeDefs()}${finRays('fr', 0.18, 0, 5)}<clipPath id="bc"><path d="${body}"/></clipPath></defs>
+  ${fin('M92,26 C84,10 66,6 54,12 C62,20 66,30 66,38 Z', '#e9cf86', '#8a6a24', 1.6)}
+  ${fin('M92,114 C84,130 66,134 54,128 C62,120 66,110 66,102 Z', '#e9cf86', '#8a6a24', 1.6)}
+  <path d="${body}" fill="url(#pb)"/>
+  <g clip-path="url(#bc)">${pufferSpots([[70, 44, 5], [92, 36, 4], [116, 40, 5], [140, 36, 4], [82, 58, 4], [106, 56, 5], [130, 54, 4], [58, 60, 3.5], [150, 50, 3.5], [96, 72, 3], [122, 70, 3]])}<path d="${body}" fill="url(#shade)"/></g>
+  <path d="${body}" fill="none" stroke="#7a5a1c" stroke-width="1.8" opacity=".7"/>
+  <path d="M184,66 C178,68 176,72 184,76 Z" fill="#fff" stroke="#7a5a1c" stroke-width="1.5"/>
+  ${eye(156, 52, 9, '#e8a020')}`;
+});
+asset('puffer_tail', 50, 70, () => `<defs>${finRays('fr', 0.2, 90, 5)}</defs>
+  ${fin('M48,28 C34,24 20,8 6,6 C12,26 12,44 6,64 C20,62 34,46 48,42 Z', '#e9cf86', '#8a6a24', 1.6)}`);
+asset('puffer_pec', 30, 30, () => `<defs>${finRays('fr', 0.18, 0, 5)}</defs>
+  ${fin('M24,2 C12,6 4,16 2,28 C14,24 24,14 28,4 Z', '#f3dfa0', '#8a6a24', 1.3)}`);
+asset('puffer_ball', 200, 200, () => {
+  let spikes = '';
+  for (let i = 0; i < 26; i++) {
+    const a = (i / 26) * Math.PI * 2 + 0.12, c = Math.cos(a), sn = Math.sin(a);
+    const bx = 100 + c * 70, by = 100 + sn * 70, tx = 100 + c * 94, ty = 100 + sn * 94;
+    spikes += `<path d="M${f(bx - sn * 5)},${f(by + c * 5)} L${f(tx)},${f(ty)} L${f(bx + sn * 5)},${f(by - c * 5)} Z" fill="${sn > 0.25 ? '#f4e8c4' : '#c99a44'}" stroke="#7a5a1c" stroke-width="1"/>`;
+  }
+  let inner = '';
+  for (let i = 0; i < 16; i++) { const a = rand(0, 6.28), r = rand(18, 58), x = 100 + Math.cos(a) * r, y = 100 + Math.sin(a) * r; inner += `<path d="M${f(x - 3)},${f(y + 2)} L${f(x)},${f(y - 7)} L${f(x + 3)},${f(y + 2)} Z" fill="#fff6d8" stroke="#7a5a1c" stroke-width=".8" opacity=".9"/>`; }
+  return `<defs>${lin('pb', [[0, '#b98a3a'], [0.45, '#e3c06a'], [0.7, '#f7ecc8'], [1, '#fffaf0']])}${rad('hl', [[0, '#fff', 0.5], [1, '#fff', 0]], 0.38, 0.3, 0.45)}${finRays('fr', 0.18, 0, 5)}<clipPath id="bc"><circle cx="100" cy="100" r="72"/></clipPath></defs>
+  ${fin('M34,92 C22,86 12,74 4,72 C8,90 8,108 4,126 C12,124 22,112 34,106 Z', '#e9cf86', '#8a6a24', 1.4)}
+  ${spikes}
+  <circle cx="100" cy="100" r="72" fill="url(#pb)"/>
+  <g clip-path="url(#bc)">${pufferSpots([[70, 60, 6], [98, 48, 5], [126, 56, 6], [84, 78, 5], [112, 74, 5], [56, 82, 4], [140, 76, 4], [100, 92, 4]])}<circle cx="100" cy="100" r="72" fill="url(#hl)"/></g>
+  <circle cx="100" cy="100" r="72" fill="none" stroke="#7a5a1c" stroke-width="1.8" opacity=".7"/>
+  ${inner}
+  ${fin('M112,118 C100,122 94,132 92,142 C104,138 114,130 118,120 Z', '#f3dfa0', '#8a6a24', 1.2)}
+  <path d="M171,96 C164,99 164,105 171,108 Z" fill="#fff" stroke="#7a5a1c" stroke-width="1.5"/>
+  ${eye(146, 80, 11, '#e8a020')}`;
+});
+
+// ---------- Captain Greg's research submarine (far background, like the diver) ----------
+asset('sub_body', 660, 260, () => {
+  const hull = 'M70,150 C70,96 130,84 230,84 L500,84 C590,84 650,112 650,150 C650,188 590,216 500,216 L230,216 C130,216 70,204 70,150 Z';
+  const port = (x, who) => `<circle cx="${x}" cy="130" r="27" fill="#3a2c08"/><circle cx="${x}" cy="130" r="21" fill="#9be3ff"/>${who}<circle cx="${x}" cy="130" r="21" fill="none" stroke="#fff" stroke-width="2" opacity=".5"/><path d="M${x - 13},120 A16,16 0 0 1 ${x + 2},113" stroke="#fff" stroke-width="3" fill="none" opacity=".8"/>`;
+  // the captain at the front porthole: face, beard and a white cap with a gold badge
+  const greg = `<g><circle cx="556" cy="134" r="10" fill="#e8b48a"/><path d="M546,137 C548,148 564,148 566,137 C562,142 550,142 546,137 Z" fill="#7a5230"/><path d="M544,128 C546,116 566,116 568,128 Z" fill="#fff" stroke="#22303c" stroke-width="1.2"/><path d="M543,129 L571,129" stroke="#16202a" stroke-width="3" stroke-linecap="round"/><circle cx="556" cy="123" r="2.2" fill="#f2b51e"/><circle cx="560" cy="133" r="1.4" fill="#111"/></g>`;
+  return `<defs>${lin('h', [[0, '#ffe066'], [0.45, '#f6bf1d'], [1, '#b47c06']])}${lin('t', [[0, '#ffd84a'], [1, '#c48d0a']])}<clipPath id="hc"><path d="${hull}"/></clipPath></defs>
+  <path d="M76,150 L30,96 L18,96 L34,150 L18,204 L30,204 Z" fill="#d79a10" stroke="#6a4a04" stroke-width="2.5"/>
+  <path d="M300,86 L312,40 L420,40 L436,86 Z" fill="url(#t)" stroke="#6a4a04" stroke-width="2.5"/>
+  <rect x="352" y="8" width="8" height="34" fill="#8a949c" stroke="#4a5258" stroke-width="1.5"/><rect x="352" y="6" width="26" height="9" rx="3" fill="#8a949c" stroke="#4a5258" stroke-width="1.5"/>
+  <path d="${hull}" fill="url(#h)"/>
+  <g clip-path="url(#hc)"><rect x="60" y="166" width="600" height="8" fill="#1e88c8"/><ellipse cx="360" cy="96" rx="250" ry="10" fill="#fff" opacity=".35"/></g>
+  <path d="${hull}" fill="none" stroke="#6a4a04" stroke-width="3"/>
+  ${port(250, '')}${port(340, '')}${port(430, '')}${port(556, greg)}
+  <path d="M200,216 L190,240 L330,240 L320,216 Z" fill="#8a6408" stroke="#6a4a04" stroke-width="2"/>
+  <path d="M632,128 L650,122 L656,150 L650,178 L632,172 Z" fill="#8a949c" stroke="#4a5258" stroke-width="2"/><ellipse cx="652" cy="150" rx="5" ry="16" fill="#fff8d0"/>`;
+});
+asset('sub_prop', 30, 120, () => `<rect x="12" y="50" width="16" height="20" rx="4" fill="#6a747c"/>
+  <path d="M15,58 C2,40 4,14 15,4 C24,16 24,42 15,58 Z M15,62 C2,80 4,106 15,116 C24,104 24,78 15,62 Z" fill="#9aa4ac" stroke="#4a5258" stroke-width="2"/>`);
+
+// ---------- anglerfish (night only): a dark deep-sea fish; its glowing lure is drawn above the night shade ----------
+asset('angler_body', 270, 210, () => {
+  const body = 'M246,120 C246,78 214,48 160,44 C104,40 62,64 40,100 L28,112 L28,128 L40,138 C60,176 104,196 160,190 C200,186 232,166 246,140 Z';
+  let teeth = '';
+  for (let i = 0; i < 7; i++) { const x = 178 + i * 10; teeth += `<path d="M${x},128 L${x + 4},${144 - (i % 2) * 4} L${x + 8},128 Z" fill="#f4f0e0"/><path d="M${x + 2},162 L${x + 6},${146 + (i % 2) * 4} L${x + 10},162 Z" fill="#f4f0e0"/>`; }
+  return `<defs>${lin('ab', [[0, '#3a2c3c'], [0.5, '#5a3f52'], [1, '#2a1f2e']])}${shadeDefs()}${finRays('fr', 0.25, 0, 5)}<clipPath id="bc"><path d="${body}"/></clipPath></defs>
+  ${fin('M120,46 C110,22 84,16 66,24 C78,34 84,48 84,60 Z', '#4a3446', '#1c141e', 1.6)}
+  ${fin('M120,190 C110,206 88,208 72,200 C82,192 88,182 88,172 Z', '#4a3446', '#1c141e', 1.6)}
+  <path d="M176,50 C180,22 206,8 240,22" fill="none" stroke="#2a1f2e" stroke-width="5" stroke-linecap="round"/>
+  <path d="${body}" fill="url(#ab)"/>
+  <g clip-path="url(#bc)"><path d="${body}" fill="url(#shade)"/>
+    <path d="M170,128 C196,122 226,124 250,130 L250,160 C226,166 196,166 172,160 Z" fill="#120a12"/>${teeth}</g>
+  <path d="${body}" fill="none" stroke="#1c141e" stroke-width="2" opacity=".8"/>
+  <circle cx="242" cy="24" r="8" fill="#bff6ff" stroke="#5fd0e8" stroke-width="2"/>
+  ${eye(196, 92, 8, '#d8e8f0')}`;
+});
+asset('angler_tail', 60, 90, () => `<defs>${finRays('fr', 0.25, 90, 5)}</defs>
+  ${fin('M58,38 C42,32 24,10 6,6 C14,32 14,58 6,84 C24,80 42,58 58,52 Z', '#4a3446', '#1c141e', 1.8)}`);
+asset('angler_pec', 40, 36, () => `<defs>${finRays('fr', 0.25, 0, 5)}</defs>
+  ${fin('M32,2 C16,8 6,20 2,34 C18,28 30,16 38,6 Z', '#5a4256', '#1c141e', 1.4)}`);
+
+// Night only: Scuba Steve's other arm reaching forward with the torch (placed over the body at x 220, y 52)
+asset('diver_torch', 80, 70, () => `<g transform="translate(-220,-52)">
+  <path d="M234,64 L256,96 L276,110" fill="none" stroke="#141c24" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="277" cy="111" r="7" fill="#22303c"/>
+  <path d="M271,107 L289,111 L291,109 L295,117 L290,118 L289,116 L270,113 Z" fill="#f2b51e" stroke="#6a4a04" stroke-width="1.2"/></g>`);
+// Scuba Steve's Santa hat (December only); the tip trails behind him
+asset('diver_hat', 90, 70, () => `
+  <path d="M32,50 L72,44 C70,22 56,6 36,8 C24,9 14,14 10,20 C22,20 30,30 32,50 Z" fill="#e01818" stroke="#7a0c0c" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M30,53 L74,46" stroke="#c8ccd0" stroke-width="16" stroke-linecap="round"/><path d="M30,53 L74,46" stroke="#fff" stroke-width="13" stroke-linecap="round"/>
+  <circle cx="10" cy="20" r="9" fill="#fff" stroke="#c8ccd0" stroke-width="1.5"/>`);
+
 asset('hook', 60, 120, () => `
   <circle cx="30" cy="8" r="5" fill="none" stroke="#c8d0d8" stroke-width="3"/>
   <path d="M30,13 L30,78 C30,104 6,104 6,82 L6,66 L13,75" fill="none" stroke="#5a646c" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -990,13 +1079,18 @@ const profile = path.join(TMP, 'chrome-profile');
 // Roku can't mirror images with negative scale, so creatures also get a pre-flipped "_l" (facing left) copy.
 const MIRROR = new Set(['clown_body', 'clown_tail', 'clown_pec', 'seagrass', 'tang_pec', 'ytang_pec', 'angel_pec', 'shark_pec', 'shark_pecf', 'shark_dorsal', 'dolphin_pec', 'dolphin_dorsal', 'whale_fin', 'tang_body', 'tang_tail', 'ytang_body', 'ytang_tail', 'angel_body', 'angel_tail',
   'school_fish', 'shark_body', 'shark_tail', 'turtle_body', 'turtle_flipper', 'turtle_rear', 'manta', 'whale',
-  'octo_body', 'octo_arms', 'dolphin_body', 'dolphin_tail', 'lion_body', 'lion_fin', 'lion_tail', 'seahorse', 'seahorse_fin', 'crab_legs', 'diver_body', 'diver_leg', 'diver_beam', 'shrimp', 'shrimp_finger']);
+  'octo_body', 'octo_arms', 'dolphin_body', 'dolphin_tail', 'lion_body', 'lion_fin', 'lion_tail', 'seahorse', 'seahorse_fin', 'crab_legs', 'diver_body', 'diver_leg', 'diver_beam', 'puffer_body', 'puffer_tail', 'puffer_pec', 'puffer_ball', 'sub_body', 'sub_prop', 'angler_body', 'angler_tail', 'angler_pec', 'diver_hat', 'diver_torch', 'shrimp', 'shrimp_finger']);
 const jobs = [];
 for (const a of list) {
   R = mulberry(hash(a.name)); idc = 0;
   const inner = a.fn();
   jobs.push({ ...a, inner });
-  if (MIRROR.has(a.name)) jobs.push({ ...a, name: a.name + '_l', inner: `<g transform="translate(${a.w},0) scale(-1,1)">${inner}</g>` });
+  if (MIRROR.has(a.name)) {
+    // an asset whose function takes an argument draws its own left-facing variant (text that must not read backwards)
+    let innerL = inner;
+    if (a.fn.length) { R = mulberry(hash(a.name)); idc = 0; innerL = a.fn(true); }
+    jobs.push({ ...a, name: a.name + '_l', inner: `<g transform="translate(${a.w},0) scale(-1,1)">${innerL}</g>` });
+  }
 }
 for (const a of jobs) {
   const W = Math.round(a.w * a.res), H = Math.round(a.h * a.res);

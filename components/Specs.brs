@@ -5,6 +5,9 @@
 '   po       = phase offset for that part's motion (radians); op = fixed opacity
 '   prey     = darts away from sharks
 '   flat     = keeps a level path (crawlers); hop = little bounce period; noFlip = never mirrored
+'   season   = part only drawn in that season ("xmas"); night = part only drawn when spawned in the dark; sym = same image facing either way; light = no depth tint
+'   puff     = puffs up instead of fleeing (puffParts = its inflated look); twin kinds (diverlight...) are the glowing
+'              parts of a creature, drawn above the night shade and swimming the very same path
 '   cx,cy    = creature centre; minX/maxX = horizontal extent (for off-screen maths)
 '   scale    = size at depth 1 (closest); speed = pixels/second at depth 1; bob = vertical wave
 function getSpecs() as object
@@ -90,11 +93,38 @@ function getSpecs() as object
             { id: "legF", uri: "diver_leg", w: 200, x: -104, y: 42, px: 196, py: 30, anim: "rot", amp: 0.18, period: 1.6, po: 3.14, dark: 0.7 }
             { id: "legN", uri: "diver_leg", w: 200, x: -96, y: 46, px: 196, py: 30, anim: "rot", amp: 0.18, period: 1.6 }
             { id: "body", uri: "diver_body", w: 300, x: 0, y: 0 }
+            { id: "torch", uri: "diver_torch", w: 80, x: 220, y: 52, night: true }
+            { id: "hat", uri: "diver_hat", w: 90, x: 222, y: -8, season: "xmas", light: true }
         ] }
         ' the diver's torch beam: a twin that swims the diver's exact path in a layer above the night shade
         ' (same cx/cy/extent/scale/speed/bob as the diver, so the two stay together)
         diverlight: { cx: 100, cy: 66, minX: -104, maxX: 300, scale: 1.3, speed: 45, bob: 15, parts: [
-            { id: "beam", uri: "diver_beam", w: 640, h: 300, x: 178, y: 9, px: 6, py: 90, light: true, anim: "rot", amp: 0.09, period: 7.0 }
+            { id: "beam", uri: "diver_beam", w: 640, h: 300, x: 286, y: 23, px: 6, py: 90, light: true, anim: "rot", amp: 0.09, period: 7.0 }
+        ] }
+        ' pufferfish (rare): swims to mid-screen, or meets a shark, then puffs into a spiky ball and floats away
+        puffer: { prey: true, puff: true, cx: 95, cy: 70, minX: -22, maxX: 190, scale: 1.0, speed: 55, bob: 18, parts: [
+            { id: "tail", uri: "puffer_tail", w: 50, x: -22, y: 35, px: 48, py: 35, anim: "rot", amp: 0.3, period: 0.5 }
+            { id: "body", uri: "puffer_body", w: 190, x: 0, y: 0 }
+            { id: "pec", uri: "puffer_pec", w: 30, x: 108, y: 72, px: 25, py: 4, anim: "rot", amp: 0.35, period: 0.35, po: 1.0 }
+        ], puffParts: [
+            { id: "ball", uri: "puffer_ball", w: 200, x: -5, y: -30 }
+        ] }
+        ' Captain Greg's research submarine, far away like the diver; its headlight is the twin "sublight"
+        sub: { cx: 330, cy: 150, minX: -6, maxX: 660, scale: 0.6, speed: 90, bob: 8, parts: [
+            { id: "prop", uri: "sub_prop", w: 30, x: -6, y: 90, px: 15, py: 60, anim: "scale", samp: [0, -0.5], period: 0.3 }
+            { id: "body", uri: "sub_body", w: 660, x: 0, y: 0 }
+        ] }
+        sublight: { cx: 330, cy: 150, minX: -6, maxX: 660, scale: 0.6, speed: 90, bob: 8, parts: [
+            { id: "beam", uri: "diver_beam", w: 960, h: 450, x: 643, y: 15, px: 9, py: 135, light: true }
+        ] }
+        ' anglerfish (night only): a dark body under the night shade; the glowing lure is the twin "anglerlight"
+        angler: { cx: 135, cy: 115, minX: -26, maxX: 270, scale: 0.8, speed: 30, bob: 14, parts: [
+            { id: "tail", uri: "angler_tail", w: 60, x: -26, y: 75, px: 58, py: 45, anim: "rot", amp: 0.2, period: 1.1 }
+            { id: "body", uri: "angler_body", w: 270, x: 0, y: 0 }
+            { id: "pec", uri: "angler_pec", w: 40, x: 118, y: 130, px: 34, py: 4, anim: "rot", amp: 0.25, period: 1.3, po: 1.0 }
+        ] }
+        anglerlight: { cx: 135, cy: 115, minX: -26, maxX: 270, scale: 0.8, speed: 30, bob: 14, parts: [
+            { id: "lure", uri: "glow_dot", sym: true, w: 110, h: 110, x: 187, y: -31, px: 55, py: 55, light: true, anim: "scale", samp: [0.3, 0.3], period: 2.2 }
         ] }
         school: { prey: true, cx: 240, cy: 100, minX: 0, maxX: 480, scale: 0.6, speed: 150, bob: 40, school: 14, parts: [] }
     }

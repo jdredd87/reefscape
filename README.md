@@ -4,7 +4,7 @@ An animated "2.5D" coral reef: depth layers with parallax camera sway, depth haz
 moving caustics on the sand, bubbles, swaying kelp and ~30 animated creatures: reef fish, schools,
 lionfish, sharks, sea turtles, mantas, jellyfish, octopus, a dolphin pod, a distant whale, seahorses,
 crabs, sea stars, a moray eel in the rock cave, a snapping shrimp that pops out of the sponge tubes, a colony of garden eels that duck into the sand, and a clownfish pair living in the anemone. Reef fish scatter when a shark swims through, and on the nights after a full moon the corals spawn under the moonlight. Now and then Scuba Steve, a scuba
-diver, passes far away (at night with a dive torch), and a baited fishing hook comes down; a fish always steals the worm and gets away.
+diver, passes far away (at night with a dive torch, in December in a Santa hat), Captain Greg's tiny yellow submarine crosses even farther back, a rare pufferfish puffs up and floats away, an anglerfish with a glowing lure prowls at night, and a baited fishing hook comes down; a fish always steals the worm and gets away.
 
 **Day/night:** follows the Roku's clock. Warm light at sunrise/sunset; at night the reef darkens,
 plankton and jellyfish glow, reef fish shelter and octopus/sharks/lionfish come out.
@@ -27,7 +27,7 @@ Run these from **PowerShell** (Git Bash's `tar` can't create the zip).
 Launch options for testing (`.\tools\roku.ps1 log -Launch "..."`): `hour=21.5` (start at a time of day),
 `demo=1` (whole day in 4 minutes), `settings=1` (open the settings panel),
 `off=shark%2Ceel` (save that list of disabled animals; `off=none` turns all back on),
-`clock=both` (show the clock this run), `count=few|some|lots` (save the animal count setting), `fish=1` (fishing event in 2 s), `diver=1` (send the diver now), `shrimp=1` (shrimp pops out now),
+`clock=both` (show the clock this run), `count=few|some|lots` (save the animal count setting), `fish=1` (fishing event in 2 s), `diver=1` (send the diver now), `show=puffer|sub|angler` (send that rare visitor now), `season=xmas` (Santa hat), `shrimp=1` (shrimp pops out now),
 `shark=1` (a close-up shark pass in 2 s, to see fish scatter), `spawn=1` (treat tonight as a full-moon coral spawning night; use with `hour=22`),
 `quality=0|1|2` (force minimal / reduced / full quality; the probe then measures every 5 s and only reports),
 `hide=surfaceGroup%2Crays` (hide nodes by id, to find which layer causes a drawing problem). `setscene=1` opens the screensaver's Custom settings screen. Combine with `&`.

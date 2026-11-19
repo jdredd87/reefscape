@@ -12,6 +12,8 @@ sub init()
     m.caustics = m.top.FindNode("caustics")
     m.glow = m.top.FindNode("plankton")
     m.farLight = m.top.FindNode("farLight")
+    m.midLight = m.top.FindNode("midLight")
+    m.season = currentSeason()
     m.timeLabel = m.top.FindNode("timeLabel")
     m.settingsPanel = m.top.FindNode("settingsPanel")
     m.settingsPanel.ObserveField("done", "onSettingsDone")
@@ -156,7 +158,7 @@ sub startCamera()
     anim.repeat = true
     anim.duration = 46
     anim.easeFunction = "linear"
-    layers = [["camFar", m.amp.far], ["camMid", m.amp.mid], ["camLight", m.amp.light], ["camNear", m.amp.near], ["camFront", m.amp.front], ["camJelly", m.amp.jelly], ["camGlow", m.amp.glow], ["camFarLight", m.amp.far]]
+    layers = [["camFar", m.amp.far], ["camMid", m.amp.mid], ["camLight", m.amp.light], ["camNear", m.amp.near], ["camFront", m.amp.front], ["camJelly", m.amp.jelly], ["camGlow", m.amp.glow], ["camFarLight", m.amp.far], ["camMidLight", m.amp.mid]]
     for each L in layers
         interp = anim.CreateChild("Vector2DFieldInterpolator")
         keys = []
@@ -868,6 +870,8 @@ sub updateLight()
     if lk < 0 then lk = 0
     m.farLight.opacity = lk
     m.farLight.visible = lk > 0.005
+    m.midLight.opacity = lk
+    m.midLight.visible = lk > 0.005
 end sub
 
 ' Remote control (only reaches us when launched as an app, not as the screensaver):
@@ -1116,6 +1120,27 @@ sub onShrimpTest()
     m.shrimpNext = m.clock.TotalMilliseconds() + 1000
 end sub
 
+' show=kind: send that rare visitor now (puffer, sub, angler...)
+sub onShowTest()
+    for each sl in m.slots
+        if sl.kinds.Count() = 1 and sl.kinds[0] = m.top.showTest then sl.due = m.clock.TotalMilliseconds() + 1000
+    end for
+end sub
+
+' season=xmas: pretend it is December
+sub onSeasonTest()
+    m.season = m.top.seasonTest
+    m.seasonFixed = true
+end sub
+
+' "xmas" from 1 to 26 December (Scuba Steve wears a Santa hat), otherwise ""
+function currentSeason() as string
+    dt = CreateObject("roDateTime")
+    dt.ToLocalTime()
+    if dt.GetMonth() = 12 and dt.GetDayOfMonth() <= 26 then return "xmas"
+    return ""
+end function
+
 sub onDiverTest()
     m.slots[m.diverSlot].due = m.clock.TotalMilliseconds() + 1000
 end sub
@@ -1163,7 +1188,7 @@ sub onSettingsDone()
                 for each n in sl.nodes
                     n.callFunc("despawn", {})
                 end for
-                if sl.kind = "diver" then m.diverLight.callFunc("despawn", {})
+                if m.twins[sl.kind] <> invalid then m.twins[sl.kind].node.callFunc("despawn", {})
                 sl.kind = ""
                 sl.due = now + 1000
             end if
@@ -1277,9 +1302,20 @@ sub buildSlots()
 
     ' a scuba diver far in the background, once in a while
     m.diverSlot = m.slots.Count()
-    m.diverLight = m.farLight.CreateChild("Creature")
-    m.diverLight.id = "diverLight"
+    ' glowing twins, drawn above the night shade: the diver's torch, the submarine's headlight, the anglerfish's lure
+    m.twins = {}
+    for each tw in [["diver", "diverlight", m.farLight], ["sub", "sublight", m.farLight], ["angler", "anglerlight", m.midLight]]
+        n = tw[2].CreateChild("Creature")
+        n.id = "twin_" + tw[0]
+        m.twins[tw[0]] = { kind: tw[1], node: n }
+    end for
     addSlot({ layer: "far", amp: m.amp.far, kinds: ["diver"], dmin: 0.18, dmax: 0.24, ymin: 260, ymax: 520, first: 70, gapMin: 180, gapMax: 360 })
+    ' Captain Greg's yellow submarine, now and then: tiny and far behind everything else (behind the far reef too)
+    addSlot({ layer: "farBack", amp: m.amp.far, kinds: ["sub"], dmin: 0.03, dmax: 0.06, ymin: 180, ymax: 400, first: 200, gapMin: 300, gapMax: 600 })
+    ' a rare pufferfish: it puffs up mid-screen (or when a shark comes) and floats away
+    addSlot({ layer: "mid", amp: m.amp.mid, kinds: ["puffer"], dmin: 0.56, dmax: 0.62, ymin: 300, ymax: 600, first: 130, gapMin: 300, gapMax: 600 })
+    ' an anglerfish prowling in the dark (night only)
+    addSlot({ layer: "mid", amp: m.amp.mid, kinds: ["angler"], dmin: 0.5, dmax: 0.58, ymin: 250, ymax: 640, first: 40, gapMin: 90, gapMax: 240, nightOnly: true })
 
     ' clownfish pair that lives at the anemone
     for i = 0 to 1
@@ -1374,6 +1410,7 @@ sub spawnSlot(i as integer, initial as boolean)
         return
     end if
     kind = allowed[Int(Rnd(0) * allowed.Count())]
+    if m.seasonFixed = invalid then m.season = currentSeason()
     if sl.forceKind <> invalid then
         kind = sl.forceKind
         sl.forceKind = invalid
@@ -1404,8 +1441,11 @@ sub spawnSlot(i as integer, initial as boolean)
             period: sl.period
             ymin: sl.ymin
             ymax: sl.ymax
+            season: m.season
+            night: m.day < 0.6
         }
-        if kind = "diver" then
+        tw = m.twins[kind]
+        if tw <> invalid then
             ' at night he carries a torch: its beam is a twin swimming the same path above the night shade
             cfg.sizeK = rnd(0.88, 1.12)
             cfg.speedK = rnd(0.85, 1.15)
@@ -1418,11 +1458,11 @@ sub spawnSlot(i as integer, initial as boolean)
                 m.uid = m.uid + 1
                 lc = {}
                 lc.Append(cfg)
-                lc.kind = "diverlight"
+                lc.kind = tw.kind
                 lc.uid = m.uid
-                m.diverLight.callFunc("spawn", lc)
+                tw.node.callFunc("spawn", lc)
             else
-                m.diverLight.callFunc("despawn", {})
+                tw.node.callFunc("despawn", {})
             end if
         end if
         sl.nodes[k].callFunc("spawn", cfg)
