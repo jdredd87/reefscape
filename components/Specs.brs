@@ -91,6 +91,11 @@ function getSpecs() as object
             { id: "legN", uri: "diver_leg", w: 200, x: -96, y: 46, px: 196, py: 30, anim: "rot", amp: 0.18, period: 1.6 }
             { id: "body", uri: "diver_body", w: 300, x: 0, y: 0 }
         ] }
+        ' the diver's torch beam: a twin that swims the diver's exact path in a layer above the night shade
+        ' (same cx/cy/extent/scale/speed/bob as the diver, so the two stay together)
+        diverlight: { cx: 100, cy: 66, minX: -104, maxX: 300, scale: 1.3, speed: 45, bob: 15, parts: [
+            { id: "beam", uri: "diver_beam", w: 640, h: 300, x: 178, y: 9, px: 6, py: 90, light: true, anim: "rot", amp: 0.09, period: 7.0 }
+        ] }
         school: { prey: true, cx: 240, cy: 100, minX: 0, maxX: 480, scale: 0.6, speed: 150, bob: 40, school: 14, parts: [] }
     }
 end function

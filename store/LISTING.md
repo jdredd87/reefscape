@@ -27,6 +27,8 @@ Reefscape is a screensaver, not an app: turn it on in Settings > Theme > Screens
 No account, no ads, no internet needed, and no data collected.
 
 ## Release notes
+1.2.7: At night Scuba Steve carries a dive torch, its beam sweeping ahead of him. Smaller download.
+
 1.2.6: If Reefscape is opened from a home-screen tile, it now explains where to turn it on (Settings > Theme > Screensavers) instead of sitting on a blank loading screen.
 
 1.2.5: Garden eels, fish that scatter from sharks, full-moon coral spawning, sea stars that crawl, drifting seahorses, fish and sharks with moving fins, a setting for how many animals swim at once, Scuba Steve the diver, and smoother animation on older Roku models.
@@ -49,7 +51,7 @@ No account, no ads, no internet needed, and no data collected.
 - Screenshots 1920x1080: screenshots/1-reef-day.jpg ... 6-clock.jpg (settings-screen.jpg is a spare)
 
 ## Package
-- ../signing/Reefscape-1.2.6.pkg (signed; keep ../signing/SIGNING-KEY.txt safe)
+- ../signing/Reefscape-1.2.7.pkg (signed; keep ../signing/SIGNING-KEY.txt safe)
 
 ## Web pages the profile asks for
 - Privacy policy: privacy-policy.html

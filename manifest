@@ -1,14 +1,14 @@
 title=Reefscape
 major_version=1
 minor_version=2
-build_version=00006
+build_version=00007
 
 # Name shown in Settings > Theme > Screensavers
 screensaver_title=Reefscape
 
 # Icons shown on the Roku home screen / app store
-mm_icon_focus_fhd=pkg:/images/icon_fhd.png
-mm_icon_focus_hd=pkg:/images/icon_hd.png
+mm_icon_focus_fhd=pkg:/images/icon_fhd.jpg
+mm_icon_focus_hd=pkg:/images/icon_hd.jpg
 
 # Loading screen. Reefscape is a screensaver only, so a home-screen tile (some Rokus show one right
 # after install) can't start anything; this screen tells the viewer where to turn it on instead.

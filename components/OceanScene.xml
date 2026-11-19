@@ -69,6 +69,10 @@
     <Rectangle id="nightShade" width="1920" height="1080" color="0x020A1CFF" opacity="0" />
     <Poster id="warmTint" scale="[30,2]" opacity="0" />
 
+    <!-- Scuba Steve's torch beam at night: moves with the far layer, drawn above the night shade -->
+    <Group id="camFarLight">
+      <Group id="farLight" opacity="0" visible="false" />
+    </Group>
     <Group id="camGlow">
       <Group id="plankton" opacity="0" />
       <!-- full-moon nights: the moon glowing through the surface, and coral spawning -->

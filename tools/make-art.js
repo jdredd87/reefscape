@@ -735,6 +735,7 @@ asset('diver_body', 300, 130, () => {
   <g clip-path="url(#c)"><path d="M92,74 C140,70 200,70 258,66" stroke="#1e88c8" stroke-width="6" fill="none"/><rect x="112" y="40" width="12" height="60" fill="#3a444c"/><rect x="110" y="62" width="16" height="12" fill="#9aa4ac"/></g>
   <path d="M236,62 L204,88 L172,96" fill="none" stroke="#141c24" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
   <circle cx="170" cy="97" r="7" fill="#22303c"/>
+  <path d="M163,93 L181,97 L183,95 L187,103 L182,104 L181,102 L162,99 Z" fill="#f2b51e" stroke="#6a4a04" stroke-width="1.2"/>
   <circle cx="272" cy="62" r="19" fill="#141c24"/>
   <rect x="274" y="50" width="22" height="18" rx="5" fill="#8fdcff" opacity=".9" stroke="#0a0a0a" stroke-width="3"/>
   <path d="M279,54 L286,54" stroke="#fff" stroke-width="2" opacity=".8"/>
@@ -745,6 +746,10 @@ asset('diver_leg', 200, 60, () => `<defs>${finRays('fr', 0.25, 0, 6)}</defs>
   <path d="M68,24 L4,8 C0,22 0,40 4,54 L68,44 Z" fill="#1e88c8" stroke="#0c4a70" stroke-width="2"/>
   <path d="M68,24 L4,8 C0,22 0,40 4,54 L68,44 Z" fill="url(#fr)"/>`);
 
+// Scuba Steve's torch beam at night (drawn above the night shade): a soft cone from his hand, aimed ahead and a little down
+asset('diver_beam', 640, 300, () => `<defs>${blur('b', 7)}<linearGradient id="g" gradientUnits="userSpaceOnUse" x1="6" y1="90" x2="590" y2="204"><stop offset="0" stop-color="#f4fbff" stop-opacity=".75"/><stop offset=".25" stop-color="#dff3ff" stop-opacity=".42"/><stop offset=".7" stop-color="#c8eaff" stop-opacity=".14"/><stop offset="1" stop-color="#c8eaff" stop-opacity="0"/></linearGradient>${rad('s', [[0, '#ffffff', 1], [0.4, '#eaf7ff', 0.7], [1, '#eaf7ff', 0]])}</defs>
+  <path d="M6,86 L620,128 C640,170 640,250 610,286 L6,94 Z" fill="url(#g)" filter="url(#b)"/>
+  <circle cx="12" cy="91" r="11" fill="url(#s)"/>`, 0.5);
 asset('hook', 60, 120, () => `
   <circle cx="30" cy="8" r="5" fill="none" stroke="#c8d0d8" stroke-width="3"/>
   <path d="M30,13 L30,78 C30,104 6,104 6,82 L6,66 L13,75" fill="none" stroke="#5a646c" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -985,7 +990,7 @@ const profile = path.join(TMP, 'chrome-profile');
 // Roku can't mirror images with negative scale, so creatures also get a pre-flipped "_l" (facing left) copy.
 const MIRROR = new Set(['clown_body', 'clown_tail', 'clown_pec', 'seagrass', 'tang_pec', 'ytang_pec', 'angel_pec', 'shark_pec', 'shark_pecf', 'shark_dorsal', 'dolphin_pec', 'dolphin_dorsal', 'whale_fin', 'tang_body', 'tang_tail', 'ytang_body', 'ytang_tail', 'angel_body', 'angel_tail',
   'school_fish', 'shark_body', 'shark_tail', 'turtle_body', 'turtle_flipper', 'turtle_rear', 'manta', 'whale',
-  'octo_body', 'octo_arms', 'dolphin_body', 'dolphin_tail', 'lion_body', 'lion_fin', 'lion_tail', 'seahorse', 'seahorse_fin', 'crab_legs', 'diver_body', 'diver_leg', 'shrimp', 'shrimp_finger']);
+  'octo_body', 'octo_arms', 'dolphin_body', 'dolphin_tail', 'lion_body', 'lion_fin', 'lion_tail', 'seahorse', 'seahorse_fin', 'crab_legs', 'diver_body', 'diver_leg', 'diver_beam', 'shrimp', 'shrimp_finger']);
 const jobs = [];
 for (const a of list) {
   R = mulberry(hash(a.name)); idc = 0;
@@ -1017,6 +1022,15 @@ for (const a of jobs) {
   const buf = fs.readFileSync(png);
   const w = buf.readUInt32BE(16), h = buf.readUInt32BE(20);
   console.log(`${a.name.padEnd(16)} ${w}x${h}${w !== W || h !== H ? '  <-- SIZE MISMATCH' : ''}`);
+}
+
+// ---------- lossless recompression (same pixels, smaller files: the package must stay under Roku's 4 MB) ----------
+// Slow for the big backgrounds (a full render takes a long time); skip with NOOPT=1 while iterating on art.
+if (jobs.length && !process.env.NOOPT) {
+  const files = jobs.map((a) => path.join(OUT, a.name + '.png'));
+  if (list.length === assets.length || only.includes('caustics')) files.push(path.join(OUT, 'caustics_a.png'), path.join(OUT, 'caustics_b.png'));
+  try { execFileSync('python', [path.join(__dirname, 'optimize-png.py'), ...files], { stdio: 'inherit' }); }
+  catch (e) { console.log('PNG optimisation skipped (needs: python -m pip install pyoxipng pillow)'); }
 }
 
 // ---------- image size table for the Roku code (components/ImageSizes.brs) ----------

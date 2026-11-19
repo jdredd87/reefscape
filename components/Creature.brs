@@ -66,6 +66,8 @@ function spawn(cfg as object) as boolean
     tint = tintFor(depth)
     speedK = cfg.speedK
     phase = rnd(0, 6.28)
+    ' fixed values (cfg.phase, dy, wave, ph, sx0) let two nodes swim the very same path: the diver and his light
+    if cfg.phase <> invalid then phase = cfg.phase
     m.cfg = cfg
     m.top.dir = dir
     ' fleeing animals beat their tails much faster
@@ -208,6 +210,8 @@ sub buildParts(parent as object, spec as object, p as string, depth as float, di
         setImg(po, part.uri + suffix)
         po.translation = [x, part.y]
         if part.dark <> invalid then po.blendColor = tintFor(depth, part.dark) else po.blendColor = tint
+        ' light (the diver's torch beam) keeps its own colour
+        if part.light <> invalid then po.blendColor = "0xFFFFFFFF"
         if part.px <> invalid then po.scaleRotateCenter = [px, part.py]
         base = 0.0
         if part.rot <> invalid then
@@ -266,16 +270,22 @@ sub startCross(cfg as object, spec as object, root as object, s as float, dir as
         sx = rightX
         ex = leftX
     end if
-    if cfg.initial = true then sx = rnd(100, 1700) - spec.cx
+    if cfg.initial = true then
+        sx = rnd(100, 1700) - spec.cx
+        if cfg.sx0 <> invalid then sx = cfg.sx0 - spec.cx
+    end if
 
     y0 = cfg.y - spec.cy
     y1 = y0 + rnd(-90, 90)
+    if cfg.dy <> invalid then y1 = y0 + cfg.dy
     if spec.flat <> invalid then y1 = y0
     dist = Abs(ex - sx)
     speed = spec.speed * persp * speedK
     bob = spec.bob * persp
     waves = dist / rnd(600, 1000)
+    if cfg.wave <> invalid then waves = dist / cfg.wave
     ph = rnd(0, 6.28)
+    if cfg.ph <> invalid then ph = cfg.ph
     w = waves * 6.2831853
 
     keys = []

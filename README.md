@@ -4,7 +4,7 @@ An animated "2.5D" coral reef: depth layers with parallax camera sway, depth haz
 moving caustics on the sand, bubbles, swaying kelp and ~30 animated creatures: reef fish, schools,
 lionfish, sharks, sea turtles, mantas, jellyfish, octopus, a dolphin pod, a distant whale, seahorses,
 crabs, sea stars, a moray eel in the rock cave, a snapping shrimp that pops out of the sponge tubes, a colony of garden eels that duck into the sand, and a clownfish pair living in the anemone. Reef fish scatter when a shark swims through, and on the nights after a full moon the corals spawn under the moonlight. Now and then Scuba Steve, a scuba
-diver, passes far away, and a baited fishing hook comes down; a fish always steals the worm and gets away.
+diver, passes far away (at night with a dive torch), and a baited fishing hook comes down; a fish always steals the worm and gets away.
 
 **Day/night:** follows the Roku's clock. Warm light at sunrise/sunset; at night the reef darkens,
 plankton and jellyfish glow, reef fish shelter and octopus/sharks/lionfish come out.
@@ -43,6 +43,9 @@ All art is generated: `node tools\make-art.js` draws every asset as SVG and rend
 `images\ocean\*.png` with headless Chrome (creatures also get a mirrored `_l` copy).
 Render just some assets with `node tools\make-art.js shark_body shark_tail`.
 `node tools\preview.js parts` builds a contact sheet in `out\preview-parts.png`.
+Every render is then recompressed losslessly by `tools\optimize-png.py` (same pixels, smaller files; needs
+`python -m pip install pyoxipng pillow`; set `NOOPT=1` to skip it while iterating). Roku rejects packages over 4 MB,
+so check the size of the signed `.pkg` before uploading. The icons (`images\icon_*.jpg`) are JPEGs for the same reason.
 `node tools\make-splash.js` builds the loading screen (`images\splash_fhd.jpg`, `images\splash_hd.jpg`) from the first store screenshot.
 
 ## Code map

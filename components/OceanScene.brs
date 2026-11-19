@@ -11,6 +11,7 @@ sub init()
     m.rays = m.top.FindNode("rays")
     m.caustics = m.top.FindNode("caustics")
     m.glow = m.top.FindNode("plankton")
+    m.farLight = m.top.FindNode("farLight")
     m.timeLabel = m.top.FindNode("timeLabel")
     m.settingsPanel = m.top.FindNode("settingsPanel")
     m.settingsPanel.ObserveField("done", "onSettingsDone")
@@ -155,7 +156,7 @@ sub startCamera()
     anim.repeat = true
     anim.duration = 46
     anim.easeFunction = "linear"
-    layers = [["camFar", m.amp.far], ["camMid", m.amp.mid], ["camLight", m.amp.light], ["camNear", m.amp.near], ["camFront", m.amp.front], ["camJelly", m.amp.jelly], ["camGlow", m.amp.glow]]
+    layers = [["camFar", m.amp.far], ["camMid", m.amp.mid], ["camLight", m.amp.light], ["camNear", m.amp.near], ["camFront", m.amp.front], ["camJelly", m.amp.jelly], ["camGlow", m.amp.glow], ["camFarLight", m.amp.far]]
     for each L in layers
         interp = anim.CreateChild("Vector2DFieldInterpolator")
         keys = []
@@ -862,6 +863,11 @@ sub updateLight()
     m.caustics.opacity = 0.08 + 0.92 * day
     m.glow.opacity = 1 - day
     m.glow.visible = day < 0.995
+    ' the diver's torch shows as it gets dark
+    lk = 1 - day * 2
+    if lk < 0 then lk = 0
+    m.farLight.opacity = lk
+    m.farLight.visible = lk > 0.005
 end sub
 
 ' Remote control (only reaches us when launched as an app, not as the screensaver):
@@ -1157,6 +1163,7 @@ sub onSettingsDone()
                 for each n in sl.nodes
                     n.callFunc("despawn", {})
                 end for
+                if sl.kind = "diver" then m.diverLight.callFunc("despawn", {})
                 sl.kind = ""
                 sl.due = now + 1000
             end if
@@ -1270,6 +1277,8 @@ sub buildSlots()
 
     ' a scuba diver far in the background, once in a while
     m.diverSlot = m.slots.Count()
+    m.diverLight = m.farLight.CreateChild("Creature")
+    m.diverLight.id = "diverLight"
     addSlot({ layer: "far", amp: m.amp.far, kinds: ["diver"], dmin: 0.18, dmax: 0.24, ymin: 260, ymax: 520, first: 70, gapMin: 180, gapMax: 360 })
 
     ' clownfish pair that lives at the anemone
@@ -1396,6 +1405,26 @@ sub spawnSlot(i as integer, initial as boolean)
             ymin: sl.ymin
             ymax: sl.ymax
         }
+        if kind = "diver" then
+            ' at night he carries a torch: its beam is a twin swimming the same path above the night shade
+            cfg.sizeK = rnd(0.88, 1.12)
+            cfg.speedK = rnd(0.85, 1.15)
+            cfg.phase = rnd(0, 6.28)
+            cfg.dy = rnd(-90, 90)
+            cfg.wave = rnd(600, 1000)
+            cfg.ph = rnd(0, 6.28)
+            cfg.sx0 = rnd(100, 1700)
+            if m.day < 0.6 then
+                m.uid = m.uid + 1
+                lc = {}
+                lc.Append(cfg)
+                lc.kind = "diverlight"
+                lc.uid = m.uid
+                m.diverLight.callFunc("spawn", lc)
+            else
+                m.diverLight.callFunc("despawn", {})
+            end if
+        end if
         sl.nodes[k].callFunc("spawn", cfg)
     end for
 end sub

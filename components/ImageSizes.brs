@@ -25,6 +25,8 @@ function imageSizes() as object
         "crab_body": [220, 140]
         "crab_legs": [100, 80]
         "crab_legs_l": [100, 80]
+        "diver_beam": [320, 150]
+        "diver_beam_l": [320, 150]
         "diver_body": [300, 130]
         "diver_body_l": [300, 130]
         "diver_leg": [200, 60]
