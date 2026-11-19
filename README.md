@@ -4,7 +4,7 @@ An animated "2.5D" coral reef: depth layers with parallax camera sway, depth haz
 moving caustics on the sand, bubbles, swaying kelp and ~30 animated creatures: reef fish, schools,
 lionfish, sharks, sea turtles, mantas, jellyfish, octopus, a dolphin pod, a distant whale, seahorses,
 crabs, sea stars, a moray eel in the rock cave, a snapping shrimp that pops out of the sponge tubes, a colony of garden eels that duck into the sand, and a clownfish pair living in the anemone. Reef fish scatter when a shark swims through, and on the nights after a full moon the corals spawn under the moonlight. Now and then Scuba Steve, a scuba
-diver, passes far away (at night with a dive torch, in December in a Santa hat), Captain Greg's tiny yellow submarine crosses even farther back, a rare pufferfish puffs up and floats away, an anglerfish with a glowing lure prowls at night, and a baited fishing hook comes down; a fish always steals the worm and gets away.
+diver, passes far away (at night with a dive torch, in December in a Santa hat), Captain Greg's tiny yellow submarine crosses even farther back, a rare pufferfish puffs up when a shark comes near and drifts away on the current, an anglerfish with a glowing lure prowls at night, and a baited fishing hook comes down; a fish always steals the worm and gets away.
 
 **Day/night:** follows the Roku's clock. Warm light at sunrise/sunset; at night the reef darkens,
 plankton and jellyfish glow, reef fish shelter and octopus/sharks/lionfish come out.

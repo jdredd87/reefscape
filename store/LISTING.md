@@ -27,7 +27,7 @@ Reefscape is a screensaver, not an app: turn it on in Settings > Theme > Screens
 No account, no ads, no internet needed, and no data collected.
 
 ## Release notes
-1.2.8: New visitors: a rare pufferfish that puffs up and floats away, an anglerfish with a glowing lure at night, and Captain Greg's tiny yellow submarine far in the distance. At night Scuba Steve carries a dive torch, and in December he wears a Santa hat. Smaller download.
+1.2.8: New visitors: a rare pufferfish that puffs up when a shark comes near and drifts away, an anglerfish with a glowing lure at night, and Captain Greg's tiny yellow submarine far in the distance. At night Scuba Steve carries a dive torch, and in December he wears a Santa hat. Smaller download.
 
 1.2.6: If Reefscape is opened from a home-screen tile, it now explains where to turn it on (Settings > Theme > Screensavers) instead of sitting on a blank loading screen.
 

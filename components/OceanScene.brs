@@ -691,7 +691,7 @@ sub updateScatter()
                 if sh.kind = "shark" then
                     sd = sh.node.dir
                     for each p in live
-                        if p.node.fleeable then
+                        if p.node.fleeable and p.kind <> "puffer" then
                             ahead = (p.x - sh.x) * sd
                             if ahead > -250 * sh.s and ahead < 1100 * sh.s and Abs(p.y - sh.y) < 330 * sh.s then
                                 away = 1
@@ -708,6 +708,22 @@ sub updateScatter()
             end for
         end if
     end for
+    ' the pufferfish puffs up when a shark in any layer is heading its way (nothing else sets it off). It starts
+    ' while the shark is still a good way off, so it swells in full view before the shark swims past (or over) it
+    if m.slots[m.pufferSlot].kind = "puffer" then
+        for each p in liveCreatures("mid")
+            if p.kind = "puffer" and p.node.fleeable then
+                for each layer in ["far", "mid", "near"]
+                    for each sh in liveCreatures(layer)
+                        if sh.kind = "shark" then
+                            ahead = (p.x - sh.x) * sh.node.dir
+                            if ahead > 420 * sh.s + 150 and ahead < 420 * sh.s + 750 and Abs(sh.y - p.y) < 300 then p.node.callFunc("flee", { awayY: -1, turn: false })
+                        end if
+                    end for
+                end for
+            end if
+        end for
+    end if
 end sub
 
 ' ---------- full-moon nights: moonlight and coral spawning ----------
@@ -1125,6 +1141,12 @@ sub onShowTest()
     for each sl in m.slots
         if sl.kinds.Count() = 1 and sl.kinds[0] = m.top.showTest then sl.due = m.clock.TotalMilliseconds() + 1000
     end for
+    ' the pufferfish test also sends a big shark once the puffer is well on screen, so it puffs up
+    if m.top.showTest = "puffer" then
+        cs = m.slots[m.closeSlot]
+        cs.forceKind = "shark"
+        cs.due = m.clock.TotalMilliseconds() + 16000
+    end if
 end sub
 
 ' season=xmas: pretend it is December
@@ -1312,7 +1334,8 @@ sub buildSlots()
     addSlot({ layer: "far", amp: m.amp.far, kinds: ["diver"], dmin: 0.18, dmax: 0.24, ymin: 260, ymax: 520, first: 70, gapMin: 180, gapMax: 360 })
     ' Captain Greg's yellow submarine, now and then: tiny and far behind everything else (behind the far reef too)
     addSlot({ layer: "farBack", amp: m.amp.far, kinds: ["sub"], dmin: 0.03, dmax: 0.06, ymin: 180, ymax: 400, first: 200, gapMin: 300, gapMax: 600 })
-    ' a rare pufferfish: it puffs up mid-screen (or when a shark comes) and floats away
+    ' a rare pufferfish: it only puffs up (and floats away) when a shark comes close
+    m.pufferSlot = m.slots.Count()
     addSlot({ layer: "mid", amp: m.amp.mid, kinds: ["puffer"], dmin: 0.56, dmax: 0.62, ymin: 300, ymax: 600, first: 130, gapMin: 300, gapMax: 600 })
     ' an anglerfish prowling in the dark (night only)
     addSlot({ layer: "mid", amp: m.amp.mid, kinds: ["angler"], dmin: 0.5, dmax: 0.58, ymin: 250, ymax: 640, first: 40, gapMin: 90, gapMax: 240, nightOnly: true })

@@ -27,10 +27,15 @@ function flee(params as object) as boolean
     ' only from on screen (or just at its edge): a fish waiting off screen must not race back in
     x = t[0] + spec.cx
     if x < -60 or x > 1980 then return false
+    ' a pufferfish only puffs up well inside the screen, where the whole show can be seen
+    if spec.puff <> invalid and (x < 260 or x > 1660) then return false
+    if spec.puff <> invalid then
+        puffUp(spec, t)
+        return true
+    end if
     cfg = {}
     cfg.Append(m.cfg)
     cfg.mode = "flee"
-    if spec.puff <> invalid then cfg.mode = "puff"
     cfg.delay = 0
     cfg.initial = false
     cfg.fleeY = params.awayY
@@ -70,6 +75,7 @@ function spawn(cfg as object) as boolean
     ' fixed values (cfg.phase, dy, wave, ph, sx0) let two nodes swim the very same path: the diver and his light
     if cfg.phase <> invalid then phase = cfg.phase
     m.cfg = cfg
+    m.pfx = p
     m.top.dir = dir
     ' fleeing animals beat their tails much faster
     animK = speedK
@@ -97,12 +103,6 @@ function spawn(cfg as object) as boolean
         spread = 1.0
         if cfg.mode = "flee" then spread = 1.7
         buildSchool(inner, spec, p, tint, dir, spread)
-    else if cfg.mode = "puff" then
-        ' the inflated look
-        ps = {}
-        ps.Append(spec)
-        ps.parts = spec.puffParts
-        buildParts(inner, ps, p, depth, dir, phase, animK)
     else
         buildParts(inner, spec, p, depth, dir, phase, animK)
     end if
@@ -131,8 +131,6 @@ function spawn(cfg as object) as boolean
         startSteal(cfg, spec, root, s, dir)
     else if cfg.mode = "flee" then
         startFlee(cfg, spec, root, s, sy, dir, persp, speedK)
-    else if cfg.mode = "puff" then
-        startPuff(cfg, spec, root, inner, s, dir, persp, phase)
     else
         startCross(cfg, spec, root, s, moveDir, persp, speedK)
         if spec.prey <> invalid then m.top.fleeable = true
@@ -202,26 +200,43 @@ sub startFlee(cfg as object, spec as object, root as object, s as float, sy as f
     watch(anim)
 end sub
 
-' A pufferfish puffs up: it swells into a ball where it is, then drifts slowly up and away, wobbling
-sub startPuff(cfg as object, spec as object, root as object, inner as object, s as float, dir as integer, persp as float, phase as float)
-    x0 = cfg.startPos[0] - spec.cx
-    y0 = cfg.startPos[1] - spec.cy
+' A pufferfish puffs up where it is. Its inflating frames (the same drawing from fish to spiky ball, already there
+' but invisible) fade in one over the other, each a little rounder, so it swells smoothly; then it drifts slowly
+' up and away, wobbling. Nothing is rebuilt, so nothing blinks.
+sub puffUp(spec as object, t as object)
+    root = m.root
+    p = m.pfx
+    if m.swim <> invalid then
+        m.swim.UnobserveField("state")
+        m.swim.control = "stop"
+        m.swim = invalid
+    end if
+    m.top.fleeable = false
+    m.cfg.mode = "puff"
+    s = root.scale[0]
+    persp = 0.22 + 0.78 * m.cfg.depth
+    x0 = t[0]
+    y0 = t[1]
     ey = -130 * s - spec.cy - 40
-    drift = dir * rnd(60, 200)
+    ' a current carries it sideways across the screen (toward the side with more room) as it rises
+    drift = rnd(160, 340)
+    if x0 + spec.cx > 960 then drift = -drift
+    ph = rnd(0, 6.28)
     dist = y0 - ey
     if dist < 100 then dist = 100
-    duration = dist / (7 + 10 * persp)
+    duration = Sqr(dist * dist + drift * drift) / (9 + 12 * persp)
     keys = []
     pts = []
-    for i = 0 to 16
-        t = i / 16
-        keys.Push(t)
+    for i = 0 to 32
+        u = i / 32
+        keys.Push(u)
         ' a slow start while it swells, then a steady rise
-        u = t * t * (3 - 2 * t) * 0.35 + t * 0.65
-        pts.Push([x0 + drift * t + 26 * persp * Sin(t * 7 + phase), y0 + (ey - y0) * u])
+        v = u * u * (3 - 2 * u) * 0.35 + u * 0.65
+        ' the current comes in gusts: the sideways drift surges and eases, and the rise dips now and then
+        gx = drift * (v + 0.09 * (Sin(u * 13 + ph) - Sin(ph)))
+        gy = 18 * persp * (Sin(u * 11 + ph * 1.7) - Sin(ph * 1.7)) * (1 - u * 0.5)
+        pts.Push([x0 + gx, y0 + (ey - y0) * v + gy])
     end for
-    root.translation = pts[0]
-    root.rotation = 0
     anim = m.top.CreateChild("Animation")
     anim.duration = duration
     anim.easeFunction = "linear"
@@ -229,14 +244,44 @@ sub startPuff(cfg as object, spec as object, root as object, inner as object, s 
     posI.key = keys
     posI.keyValue = pts
     posI.fieldToInterp = root.id + ".translation"
-    ' swell from fish size to the full ball in about a second, with a little overshoot
-    k = 1.0 / duration
+    k = 1.0 / duration   ' one second, as a fraction of the whole animation
+    rotI = anim.CreateChild("FloatFieldInterpolator")
+    rotI.key = [0, k, 1]
+    rotI.keyValue = [root.rotation, 0, 0]
+    rotI.fieldToInterp = root.id + ".rotation"
+    ' frame 0 looks just like the swimming fish: it takes over at once, then each next frame fades in on top
+    n = spec.puff
+    t0 = 0.12   ' seconds for frame 0 to take over
+    dt = 0.34   ' seconds per following frame
+    for i = 0 to n - 1
+        a = 0.0
+        if i > 0 then a = t0 + (i - 1) * dt
+        b = t0 + i * dt
+        if i = 0 then b = t0
+        fo = anim.CreateChild("FloatFieldInterpolator")
+        if i = 0 then
+            fo.key = [0, b * k, 1]
+            fo.keyValue = [0, 1, 1]
+        else
+            fo.key = [0, a * k, b * k, 1]
+            fo.keyValue = [0, 0, 1, 1]
+        end if
+        fo.fieldToInterp = p + "f" + i.ToStr() + ".opacity"
+    end for
+    ' the separate swimming parts go once frame 0 covers them
+    for each id in ["tail", "body", "pec"]
+        fo = anim.CreateChild("FloatFieldInterpolator")
+        fo.key = [0, t0 * k, (t0 + 0.05) * k, 1]
+        fo.keyValue = [1, 1, 0, 0]
+        fo.fieldToInterp = p + id + ".opacity"
+    end for
+    ' a little overshoot as it reaches full size
+    te = t0 + (n - 1) * dt
     sI = anim.CreateChild("Vector2DFieldInterpolator")
-    sI.key = [0, k * 0.7, k, 1]
-    sI.keyValue = [[s * 0.5, s * 0.5], [s * 1.08, s * 1.08], [s, s], [s, s]]
+    sI.key = [0, (te - 0.3) * k, te * k, (te + 0.35) * k, 1]
+    sI.keyValue = [[s, s], [s, s], [s * 1.07, s * 1.07], [s, s], [s, s]]
     sI.fieldToInterp = root.id + ".scale"
-    root.scale = [s * 0.5, s * 0.5]
-    m.anims.Push(addLoopFloat(m.top, inner.id, "rotation", 0, 0.14, 5.5, phase))
+    m.anims.Push(addLoopFloat(m.top, p + "inner", "rotation", 0, 0.17, 6.5, 0))
     watch(anim)
 end sub
 
@@ -320,8 +365,6 @@ sub startCross(cfg as object, spec as object, root as object, s as float, dir as
         sx = rightX
         ex = leftX
     end if
-    ' a pufferfish only swims to somewhere mid-screen: there it puffs up (see onSwimState)
-    if spec.puff <> invalid then ex = rnd(650, 1270) - spec.cx
     if cfg.initial = true then
         sx = rnd(100, 1700) - spec.cx
         if cfg.sx0 <> invalid then sx = cfg.sx0 - spec.cx
@@ -557,11 +600,6 @@ sub onSwimState()
     if m.swim <> invalid and m.swim.state = "stopped" then
         m.swim.UnobserveField("state")
         m.swim = invalid
-        ' a pufferfish that got to the end of its swim undisturbed puffs up now
-        if m.cfg <> invalid and m.cfg.mode = "cross" and m.specs[m.cfg.kind].puff <> invalid and m.root <> invalid then
-            m.top.fleeable = true
-            if flee({ awayY: -1, turn: false }) then return
-        end if
         ' finished: it waits off screen until its slot reuses it, so it must not flee any more
         ' (it would race back across the screen and vanish when the slot spawns the next animal)
         m.top.fleeable = false

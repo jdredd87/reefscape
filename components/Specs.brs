@@ -6,7 +6,7 @@
 '   prey     = darts away from sharks
 '   flat     = keeps a level path (crawlers); hop = little bounce period; noFlip = never mirrored
 '   season   = part only drawn in that season ("xmas"); night = part only drawn when spawned in the dark; sym = same image facing either way; light = no depth tint
-'   puff     = puffs up instead of fleeing (puffParts = its inflated look); twin kinds (diverlight...) are the glowing
+'   puff     = puffs up instead of fleeing (the number of inflating frames, parts f0..); twin kinds (diverlight...) are the glowing
 '              parts of a creature, drawn above the night shade and swimming the very same path
 '   cx,cy    = creature centre; minX/maxX = horizontal extent (for off-screen maths)
 '   scale    = size at depth 1 (closest); speed = pixels/second at depth 1; bob = vertical wave
@@ -101,13 +101,18 @@ function getSpecs() as object
         diverlight: { cx: 100, cy: 66, minX: -104, maxX: 300, scale: 1.3, speed: 45, bob: 15, parts: [
             { id: "beam", uri: "diver_beam", w: 640, h: 300, x: 286, y: 23, px: 6, py: 90, light: true, anim: "rot", amp: 0.09, period: 7.0 }
         ] }
-        ' pufferfish (rare): swims to mid-screen, or meets a shark, then puffs into a spiky ball and floats away
-        puffer: { prey: true, puff: true, cx: 95, cy: 70, minX: -22, maxX: 190, scale: 1.0, speed: 55, bob: 18, parts: [
-            { id: "tail", uri: "puffer_tail", w: 50, x: -22, y: 35, px: 48, py: 35, anim: "rot", amp: 0.3, period: 0.5 }
-            { id: "body", uri: "puffer_body", w: 190, x: 0, y: 0 }
-            { id: "pec", uri: "puffer_pec", w: 30, x: 108, y: 72, px: 25, py: 4, anim: "rot", amp: 0.35, period: 0.35, po: 1.0 }
-        ], puffParts: [
-            { id: "ball", uri: "puffer_ball", w: 200, x: -5, y: -30 }
+        ' pufferfish (rare): crosses like any fish; only a shark coming close makes it puff into a spiky ball and float away
+        puffer: { prey: true, puff: 6, cx: 120, cy: 120, minX: 0, maxX: 240, scale: 1.0, speed: 55, bob: 18, parts: [
+            { id: "tail", uri: "puffer_tail", w: 50, x: 0, y: 85, px: 48, py: 35, anim: "rot", amp: 0.3, period: 0.5 }
+            { id: "body", uri: "puffer_body", w: 240, x: 0, y: 0 }
+            { id: "pec", uri: "puffer_pec", w: 30, x: 109, y: 121, px: 25, py: 4, anim: "rot", amp: 0.35, period: 0.35, po: 1.0 }
+            ' the inflating frames (fish .. spiky ball), invisible until a shark comes; shown in turn by puffUp in Creature.brs
+            { id: "f0", uri: "puffer_f0", w: 240, x: 0, y: 0, op: 0.0 }
+            { id: "f1", uri: "puffer_f1", w: 240, x: 0, y: 0, op: 0.0 }
+            { id: "f2", uri: "puffer_f2", w: 240, x: 0, y: 0, op: 0.0 }
+            { id: "f3", uri: "puffer_f3", w: 240, x: 0, y: 0, op: 0.0 }
+            { id: "f4", uri: "puffer_f4", w: 240, x: 0, y: 0, op: 0.0 }
+            { id: "f5", uri: "puffer_f5", w: 240, x: 0, y: 0, op: 0.0 }
         ] }
         ' Captain Greg's research submarine, far away like the diver; its headlight is the twin "sublight"
         sub: { cx: 330, cy: 150, minX: -6, maxX: 660, scale: 0.6, speed: 90, bob: 8, parts: [

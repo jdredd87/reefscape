@@ -749,43 +749,53 @@ asset('diver_leg', 200, 60, () => `<defs>${finRays('fr', 0.25, 0, 6)}</defs>
 asset('diver_beam', 640, 300, () => `<defs>${blur('b', 7)}<linearGradient id="g" gradientUnits="userSpaceOnUse" x1="6" y1="90" x2="590" y2="204"><stop offset="0" stop-color="#f4fbff" stop-opacity=".75"/><stop offset=".25" stop-color="#dff3ff" stop-opacity=".42"/><stop offset=".7" stop-color="#c8eaff" stop-opacity=".14"/><stop offset="1" stop-color="#c8eaff" stop-opacity="0"/></linearGradient>${rad('s', [[0, '#ffffff', 1], [0.4, '#eaf7ff', 0.7], [1, '#eaf7ff', 0]])}</defs>
   <path d="M6,86 L620,128 C640,170 640,250 610,286 L6,94 Z" fill="url(#g)" filter="url(#b)"/>
   <circle cx="12" cy="91" r="11" fill="url(#s)"/>`, 0.5);
-// ---------- pufferfish: swims as a small boxy fish, then puffs into a spiky ball and floats away ----------
-const pufferSpots = (list, col = '#6b4a1c') => list.map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${col}" opacity=".55"/>`).join('');
-asset('puffer_body', 190, 140, () => {
-  const body = 'M184,70 C184,50 170,30 138,24 C100,18 60,30 40,52 L26,62 L26,80 L40,90 C60,114 100,124 138,116 C170,110 184,90 184,70 Z';
-  return `<defs>${lin('pb', [[0, '#b98a3a'], [0.5, '#e3c06a'], [0.75, '#f7ecc8'], [1, '#fffaf0']])}${shadeDefs()}${finRays('fr', 0.18, 0, 5)}<clipPath id="bc"><path d="${body}"/></clipPath></defs>
-  ${fin('M92,26 C84,10 66,6 54,12 C62,20 66,30 66,38 Z', '#e9cf86', '#8a6a24', 1.6)}
-  ${fin('M92,114 C84,130 66,134 54,128 C62,120 66,110 66,102 Z', '#e9cf86', '#8a6a24', 1.6)}
-  <path d="${body}" fill="url(#pb)"/>
-  <g clip-path="url(#bc)">${pufferSpots([[70, 44, 5], [92, 36, 4], [116, 40, 5], [140, 36, 4], [82, 58, 4], [106, 56, 5], [130, 54, 4], [58, 60, 3.5], [150, 50, 3.5], [96, 72, 3], [122, 70, 3]])}<path d="${body}" fill="url(#shade)"/></g>
-  <path d="${body}" fill="none" stroke="#7a5a1c" stroke-width="1.8" opacity=".7"/>
-  <path d="M184,66 C178,68 176,72 184,76 Z" fill="#fff" stroke="#7a5a1c" stroke-width="1.5"/>
-  ${eye(156, 52, 9, '#e8a020')}`;
-});
+// ---------- pufferfish: one drawing that inflates. t = 0 is the swimming fish, t = 1 the spiky ball ----------
+// puffer_body is t = 0 without tail and side fin (those are separate, animated parts while it swims);
+// puffer_f0..f5 are the whole fish at t = 0, 0.2 .. 1, shown one after another when it puffs up.
+const PUFF_FRAMES = 6;
+function pufferArt(t, whole) {
+  const cx = 120, cy = 120, L = (a, b) => a + (b - a) * t;
+  const rx = L(80, 84), ry = L(46, 84);
+  const sp = Math.max(0, (t - 0.08) / 0.92), spike = 26 * sp * (2 - sp);   // spikes grow out as it swells
+  const P = (ux, uy) => [f(cx + ux * rx), f(cy + uy * ry)];
+  let spikes = '';
+  if (spike > 0.5) for (let i = 0; i < 26; i++) {
+    const a = (i / 26) * Math.PI * 2 + 0.12, c = Math.cos(a), sn = Math.sin(a);
+    if (c < -0.93) continue;                                               // none where the tail joins
+    const bx = cx + c * (rx - 3), by = cy + sn * (ry - 3), tx = cx + c * (rx + spike), ty = cy + sn * (ry + spike);
+    const w = 3 + 2.5 * sp;
+    spikes += `<path d="M${f(bx - sn * w)},${f(by + c * w)} L${f(tx)},${f(ty)} L${f(bx + sn * w)},${f(by - c * w)} Z" fill="${sn > 0.25 ? '#f4e8c4' : '#c99a44'}" stroke="#7a5a1c" stroke-width="1"/>`;
+  }
+  // small spines on the skin, fading in
+  let inner = '';
+  const R2 = mulberry(77);
+  for (let i = 0; i < 16; i++) {
+    const a = R2() * 6.28, r = 0.22 + R2() * 0.55, [x, y] = P(Math.cos(a) * r, Math.sin(a) * r), h = 2 + 6 * sp;
+    if (sp > 0.05) inner += `<path d="M${f(x - 3)},${f(y + 2)} L${x},${f(y - h)} L${f(x + 3)},${f(y + 2)} Z" fill="#fff6d8" stroke="#7a5a1c" stroke-width=".8" opacity="${f(0.9 * sp)}"/>`;
+  }
+  const spots = [[-0.45, -0.5, 5], [-0.15, -0.68, 4], [0.15, -0.6, 5], [0.42, -0.66, 4], [-0.28, -0.28, 4], [0.02, -0.32, 5], [0.3, -0.34, 4], [-0.62, -0.22, 3.5], [0.55, -0.42, 3.5], [-0.1, 0.02, 3], [0.2, -0.02, 3]]
+    .map(([ux, uy, r]) => { const [x, y] = P(ux, uy); return `<circle cx="${x}" cy="${y}" r="${f(r * L(1, 1.25))}" fill="#6b4a1c" opacity=".55"/>`; }).join('');
+  const [dx, dy] = P(-0.3, -0.93), [ax, ay] = P(-0.3, 0.93), [mx, my] = P(1, 0.02), [ex, ey] = P(0.6, -0.36), [px, py] = P(0.18, 0.1), tx = cx - rx;
+  const body = `<ellipse cx="${cx}" cy="${cy}" rx="${f(rx)}" ry="${f(ry)}"`;
+  return `<defs>${lin('pb', [[0, '#b98a3a'], [0.45, '#e3c06a'], [0.72, '#f7ecc8'], [1, '#fffaf0']])}${rad('hl', [[0, '#fff', 0.45], [1, '#fff', 0]], 0.4, 0.28, 0.45)}${finRays('fr', 0.18, 0, 5)}${finRays('frt', 0.2, 90, 5)}<clipPath id="bc">${body}/></clipPath></defs>
+  ${whole ? `<g transform="translate(${f(tx - 40)},${cy - 35})">${fin('M48,28 C34,24 20,8 6,6 C12,26 12,44 6,64 C20,62 34,46 48,42 Z', '#e9cf86', '#8a6a24', 1.6, 'frt')}</g>` : ''}
+  <g transform="translate(${dx},${dy})">${fin('M16,4 C8,-12 -10,-16 -22,-10 C-14,-2 -10,8 -10,16 Z', '#e9cf86', '#8a6a24', 1.6)}</g>
+  <g transform="translate(${ax},${ay})">${fin('M16,-4 C8,12 -10,16 -22,10 C-14,2 -10,-8 -10,-16 Z', '#e9cf86', '#8a6a24', 1.6)}</g>
+  ${spikes}
+  ${body} fill="url(#pb)"/>
+  <g clip-path="url(#bc)">${spots}${body} fill="url(#hl)"/></g>
+  ${body} fill="none" stroke="#7a5a1c" stroke-width="1.8" opacity=".7"/>
+  ${inner}
+  ${whole ? `<g transform="translate(${f(px - 25)},${f(py - 4)})">${fin('M24,2 C12,6 4,16 2,28 C14,24 24,14 28,4 Z', '#f3dfa0', '#8a6a24', 1.3)}</g>` : ''}
+  <path d="M${mx},${f(my - 5)} C${f(mx - 7)},${f(my - 2)} ${f(mx - 7)},${f(my + 3)} ${mx},${f(my + 6)} Z" fill="#fff" stroke="#7a5a1c" stroke-width="1.5"/>
+  ${eye(ex, ey, f(L(9, 11.5)), '#e8a020')}`;
+}
+asset('puffer_body', 240, 240, () => pufferArt(0, false));
+for (let i = 0; i < PUFF_FRAMES; i++) asset('puffer_f' + i, 240, 240, () => pufferArt(i / (PUFF_FRAMES - 1), true));
 asset('puffer_tail', 50, 70, () => `<defs>${finRays('fr', 0.2, 90, 5)}</defs>
   ${fin('M48,28 C34,24 20,8 6,6 C12,26 12,44 6,64 C20,62 34,46 48,42 Z', '#e9cf86', '#8a6a24', 1.6)}`);
 asset('puffer_pec', 30, 30, () => `<defs>${finRays('fr', 0.18, 0, 5)}</defs>
   ${fin('M24,2 C12,6 4,16 2,28 C14,24 24,14 28,4 Z', '#f3dfa0', '#8a6a24', 1.3)}`);
-asset('puffer_ball', 200, 200, () => {
-  let spikes = '';
-  for (let i = 0; i < 26; i++) {
-    const a = (i / 26) * Math.PI * 2 + 0.12, c = Math.cos(a), sn = Math.sin(a);
-    const bx = 100 + c * 70, by = 100 + sn * 70, tx = 100 + c * 94, ty = 100 + sn * 94;
-    spikes += `<path d="M${f(bx - sn * 5)},${f(by + c * 5)} L${f(tx)},${f(ty)} L${f(bx + sn * 5)},${f(by - c * 5)} Z" fill="${sn > 0.25 ? '#f4e8c4' : '#c99a44'}" stroke="#7a5a1c" stroke-width="1"/>`;
-  }
-  let inner = '';
-  for (let i = 0; i < 16; i++) { const a = rand(0, 6.28), r = rand(18, 58), x = 100 + Math.cos(a) * r, y = 100 + Math.sin(a) * r; inner += `<path d="M${f(x - 3)},${f(y + 2)} L${f(x)},${f(y - 7)} L${f(x + 3)},${f(y + 2)} Z" fill="#fff6d8" stroke="#7a5a1c" stroke-width=".8" opacity=".9"/>`; }
-  return `<defs>${lin('pb', [[0, '#b98a3a'], [0.45, '#e3c06a'], [0.7, '#f7ecc8'], [1, '#fffaf0']])}${rad('hl', [[0, '#fff', 0.5], [1, '#fff', 0]], 0.38, 0.3, 0.45)}${finRays('fr', 0.18, 0, 5)}<clipPath id="bc"><circle cx="100" cy="100" r="72"/></clipPath></defs>
-  ${fin('M34,92 C22,86 12,74 4,72 C8,90 8,108 4,126 C12,124 22,112 34,106 Z', '#e9cf86', '#8a6a24', 1.4)}
-  ${spikes}
-  <circle cx="100" cy="100" r="72" fill="url(#pb)"/>
-  <g clip-path="url(#bc)">${pufferSpots([[70, 60, 6], [98, 48, 5], [126, 56, 6], [84, 78, 5], [112, 74, 5], [56, 82, 4], [140, 76, 4], [100, 92, 4]])}<circle cx="100" cy="100" r="72" fill="url(#hl)"/></g>
-  <circle cx="100" cy="100" r="72" fill="none" stroke="#7a5a1c" stroke-width="1.8" opacity=".7"/>
-  ${inner}
-  ${fin('M112,118 C100,122 94,132 92,142 C104,138 114,130 118,120 Z', '#f3dfa0', '#8a6a24', 1.2)}
-  <path d="M171,96 C164,99 164,105 171,108 Z" fill="#fff" stroke="#7a5a1c" stroke-width="1.5"/>
-  ${eye(146, 80, 11, '#e8a020')}`;
-});
 
 // ---------- Captain Greg's research submarine (far background, like the diver) ----------
 asset('sub_body', 660, 260, () => {
@@ -1079,7 +1089,7 @@ const profile = path.join(TMP, 'chrome-profile');
 // Roku can't mirror images with negative scale, so creatures also get a pre-flipped "_l" (facing left) copy.
 const MIRROR = new Set(['clown_body', 'clown_tail', 'clown_pec', 'seagrass', 'tang_pec', 'ytang_pec', 'angel_pec', 'shark_pec', 'shark_pecf', 'shark_dorsal', 'dolphin_pec', 'dolphin_dorsal', 'whale_fin', 'tang_body', 'tang_tail', 'ytang_body', 'ytang_tail', 'angel_body', 'angel_tail',
   'school_fish', 'shark_body', 'shark_tail', 'turtle_body', 'turtle_flipper', 'turtle_rear', 'manta', 'whale',
-  'octo_body', 'octo_arms', 'dolphin_body', 'dolphin_tail', 'lion_body', 'lion_fin', 'lion_tail', 'seahorse', 'seahorse_fin', 'crab_legs', 'diver_body', 'diver_leg', 'diver_beam', 'puffer_body', 'puffer_tail', 'puffer_pec', 'puffer_ball', 'sub_body', 'sub_prop', 'angler_body', 'angler_tail', 'angler_pec', 'diver_hat', 'diver_torch', 'shrimp', 'shrimp_finger']);
+  'octo_body', 'octo_arms', 'dolphin_body', 'dolphin_tail', 'lion_body', 'lion_fin', 'lion_tail', 'seahorse', 'seahorse_fin', 'crab_legs', 'diver_body', 'diver_leg', 'diver_beam', 'puffer_body', 'puffer_tail', 'puffer_pec', 'puffer_f0', 'puffer_f1', 'puffer_f2', 'puffer_f3', 'puffer_f4', 'puffer_f5', 'sub_body', 'sub_prop', 'angler_body', 'angler_tail', 'angler_pec', 'diver_hat', 'diver_torch', 'shrimp', 'shrimp_finger']);
 const jobs = [];
 for (const a of list) {
   R = mulberry(hash(a.name)); idc = 0;
