@@ -16,7 +16,7 @@ function page(W, H) {
   const k = W / 1920;
   return `<!doctype html><html><head><meta charset="utf-8"><style>
   html, body { margin: 0; width: ${W}px; height: ${H}px; overflow: hidden; background: #063a63; }
-  .bg { position: absolute; inset: -${20 * k}px; background: url('${bg}') center / cover; filter: blur(${6 * k}px) brightness(0.7); }
+  .bg { position: absolute; inset: -${20 * k}px; background: url('${bg}') center / cover; filter: blur(${10 * k}px) brightness(0.7); }
   .shade { position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(3, 30, 55, 0.55), rgba(3, 30, 55, 0.15) 70%); }
   .box { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); text-align: center; color: #fff;
          font-family: 'Segoe UI', Arial, sans-serif; text-shadow: 0 ${3 * k}px ${10 * k}px rgba(0, 0, 0, 0.6); white-space: nowrap; }
@@ -44,7 +44,7 @@ for (const [name, W, H] of [['splash_fhd', 1920, 1080], ['splash_hd', 1280, 720]
   const jpg = path.join(ROOT, 'images', name + '.jpg');
   const ps = `Add-Type -AssemblyName System.Drawing; $i=[Drawing.Image]::FromFile('${png}');` +
     `$c=[Drawing.Imaging.ImageCodecInfo]::GetImageEncoders()|?{$_.MimeType -eq 'image/jpeg'};` +
-    `$p=New-Object Drawing.Imaging.EncoderParameters 1;$p.Param[0]=New-Object Drawing.Imaging.EncoderParameter([Drawing.Imaging.Encoder]::Quality,[long]88);` +
+    `$p=New-Object Drawing.Imaging.EncoderParameters 1;$p.Param[0]=New-Object Drawing.Imaging.EncoderParameter([Drawing.Imaging.Encoder]::Quality,[long]72);` +
     `$i.Save('${jpg}',$c,$p);$i.Dispose()`;
   execFileSync('powershell.exe', ['-NoProfile', '-Command', ps], { stdio: 'inherit' });
   console.log(name + '.jpg', fs.statSync(jpg).size, 'bytes');
