@@ -37,3 +37,6 @@ delphi/fmx/*.dsk
 delphi/fmx/*.stat
 delphi/fmx/__history/
 delphi/fmx/__recovery/
+
+# packaged downloads (published as GitHub releases)
+delphi/release/out/

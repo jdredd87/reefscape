@@ -20,7 +20,7 @@ New-Item -ItemType Directory -Force bin, $dcu | Out-Null
 & "$Studio\bin\brcc32.exe" '-foReefRes.res' ReefRes.rc | Out-Null
 if ($LASTEXITCODE -ne 0) { throw 'Resource compile failed' }
 
-& "$Studio\bin\$dcc" -B -Q '-$O+' '-$D-' '-$L-' '-$Y-' `
+& "$Studio\bin\$dcc" -B -Q '-$O+' '-$D-' '-$L-' '-$Y-' '-$C-' `
     '-NSSystem;Winapi;System.Win;Vcl;Vcl.Imaging' "-NU$dcu" '-Ebin' Reefscape.dpr
 if ($LASTEXITCODE -ne 0) { throw 'Compile failed' }
 

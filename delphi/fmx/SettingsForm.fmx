@@ -4,7 +4,7 @@ object frmSettings: TfrmSettings
   BorderIcons = [biSystemMenu]
   Caption = 'Reefscape settings'
   ClientHeight = 640
-  ClientWidth = 600
+  ClientWidth = 640
   Position = MainFormCenter
   FormFactor.Width = 320
   FormFactor.Height = 480

@@ -1,6 +1,7 @@
 unit SettingsForm;
 
-{ The FMX app's settings: time of day, clock, how many animals, and which animals.
+{ The FMX app's settings: time of day, clock, how many animals, what to do with several screens, and which
+  animals.
   The controls are created in code from the lists in ReefSettings.pas, so a new animal or option added there
   shows up here by itself. }
 
@@ -15,7 +16,7 @@ type
   TfrmSettings = class(TForm)
     procedure FormCreate(Sender: TObject);
   private
-    FLight, FClock, FCount: TArray<TRadioButton>;
+    FLight, FClock, FCount, FScreens: TArray<TRadioButton>;
     FAnimals: TListBox;
     function AddChoices(Parent: TFmxObject; const Title, Group: string; const Choices: array of TChoice;
       const Current: string): TArray<TRadioButton>;
@@ -161,13 +162,15 @@ begin
   Left := TLayout.Create(Self);
   Left.Parent := Self;
   Left.Align := TAlignLayout.Left;
-  Left.Width := 250;
+  Left.Width := 280;
   Scroll := TVertScrollBox.Create(Self);
   Scroll.Parent := Left;
   Scroll.Align := TAlignLayout.Client;
   FLight := AddChoices(Scroll, 'Time of day', 'light', LightModes, S.Light);
   FClock := AddChoices(Scroll, 'Clock', 'clock', ClockModes, S.Clock);
   FCount := AddChoices(Scroll, 'How many animals', 'count', CountModes, S.Count);
+  // used when it runs full screen as a screensaver (/s)
+  FScreens := AddChoices(Scroll, 'More than one screen', 'screens', ScreenModes, S.Screens);
 
   // right: the animals
   Right := TLayout.Create(Self);
@@ -238,6 +241,7 @@ begin
   S.Light := Chosen(FLight, LightModes);
   S.Clock := Chosen(FClock, ClockModes);
   S.Count := Chosen(FCount, CountModes);
+  S.Screens := Chosen(FScreens, ScreenModes);
   S.Off := '';
   for I := 0 to High(Animals) do
     if not FAnimals.ListItems[I].IsChecked then
