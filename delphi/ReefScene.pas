@@ -4,7 +4,12 @@ unit ReefScene;
   A port of components/OceanScene.brs and OceanScene.xml from the Roku version.
 
   Layers, back to front. Each "cam" group drifts by a different amount, which creates the parallax depth
-  effect. Fog posters between layers push distant layers back into the blue. }
+  effect. Fog posters between layers push distant layers back into the blue.
+
+  Unlike the Roku version the reef has no fixed width. It is 1080 design units high and as wide as the
+  window's shape asks for (1920 on a 16:9 screen, 2560 on a 21:9 one, 5760 across three screens...).
+  The backgrounds and the reef's fixed residents repeat in "sections", every other one mirrored so the joins
+  are seamless, and the swimmers cross the whole width. }
 
 interface
 
@@ -21,7 +26,7 @@ type
     Amp, Rest, DMin, DMax, YMin, YMax, Range, Period, First, GapMin, GapMax: Single;
     Kinds, NightKinds: TArray<string>;
     Mode: TMode;
-    HasHome, HasRange, HasFirst, DayOnly, NightOnly: Boolean;
+    HasRange, HasFirst, DayOnly, NightOnly: Boolean;
     Home: TVec2;
     Dens, Pod, Pending: Integer;
     Nodes: TArray<TCreature>;
@@ -35,9 +40,26 @@ type
   end;
 
   TGeel = record
-    X, H: Single;
+    X, H: Single;             // X = where it is in the reef (not in its section)
     Inner: TNode;
     Anim: TAnim;
+  end;
+
+  { one colony of garden eels (there is one in every section of the reef) }
+  TColony = record
+    Eels: TArray<TGeel>;
+    X0, X1: Single;
+    Down: Boolean;
+    UpAt, Solo: Double;
+  end;
+
+  { the snapping shrimp of one section's sponge }
+  TShrimp = record
+    Clip, G, Inner, Body, Finger, Bub: TNode;
+    Anim: TAnim;
+    Last: Integer;
+    Dx, X, Y, S, Open: Single;   // Dx = how far this section's sponge is from the original place
+    Tip: TVec2;
   end;
 
   TSpawnDot = record
@@ -69,14 +91,20 @@ type
     FNow: Double;           // milliseconds since the scene started
     FTickAcc: Single;
     FUid: Integer;
+    FW: Single;             // width of the reef in design units
+    FWide: Integer;         // how many 16:9 screens wide it is (at least 1)
+    FNearN, FMidN: Integer; // sections of the near and middle layers
     FView: TMat;
     FWinW, FWinH: Integer;
     FViewScale, FVX0, FVY0, FVX1, FVY1: Single;
+    FClockArea: TRect;
+    FHasClockArea: Boolean;
     // layers
     FCams: array [0 .. 8] of TNode;
     FCamAmp: array [0 .. 8] of Single;
     FLayers: array [TLayer] of TNode;
     FNearDecor, FMidDecor, FSurface, FRays, FCaustics, FBubbles, FGardenEels, FFishing, FParticles: TNode;
+    FNearSec: TArray<TNode>;
     FNightShade, FWarm, FFarLight, FMidLight, FGlow, FMoonGlow, FSpawnG: TNode;
     // light
     FHour, FDay, FTimeOffset, FCycleStart, FMoonK, FFromFull: Single;
@@ -85,16 +113,10 @@ type
     FSeason: string;
     FSeasonFixed: Boolean;
     FDensity: Integer;
-    // moray eel, shrimp, garden eels
-    FEelWrap, FShrimpClip, FShrimpG, FShrimpIn, FShrimpBody, FShrimpFinger, FShrimpBub: TNode;
-    FShrimpAnim: TAnim;
-    FShrimpLast: Integer;
+    // residents
+    FShrimps: TArray<TShrimp>;
     FShrimpNext: Double;
-    FShrimpX, FShrimpY, FShrimpS, FShrimpOpen: Single;
-    FShrimpTip: TVec2;
-    FGeels: TArray<TGeel>;
-    FGeDown: Boolean;
-    FGeUpAt, FGeSolo: Double;
+    FColonies: TArray<TColony>;
     // coral spawning
     FSpawnPool: TArray<TSpawnDot>;
     FSpawnNext: Double;
@@ -120,26 +142,30 @@ type
     FDiverSlot, FPufferSlot, FCloseSlot: Integer;
     function Off(const Key: string): Boolean;
     function FullPoster(Parent: TNode; const Img: string; Opacity: Single): TNode;
+    procedure Tile(Parent: TNode; const Img: string; X0, Y, W, H, Amp: Single);
+    function SecCount(Period, Amp, X0: Single): Integer;
+    function SecGroup(Parent: TNode; K: Integer; Period: Single): TNode;
+    function SecX(K: Integer; Period, X: Single): Single;
     procedure BuildLight;
     procedure BuildCaustics;
     procedure BuildDecor;
     procedure BuildBubbles;
     procedure BuildParticles;
-    procedure BuildEel;
-    procedure BuildShrimp;
-    procedure PlaceShrimp(I: Integer; Flip: Boolean);
+    procedure BuildEel(K: Integer);
+    procedure BuildShrimp(K: Integer);
+    procedure PlaceShrimp(var Sh: TShrimp; I: Integer; Flip: Boolean);
     procedure UpdateShrimp;
     procedure BuildPlankton;
-    procedure BuildGardenEels;
+    procedure BuildGardenEels(K: Integer);
     procedure MoveGeel(var E: TGeel; ToY, Duration, Delay: Single; Ease: TEase);
-    function GeelThreat(out X: Single): Boolean;
+    function GeelThreat(const Col: TColony; out X: Single): Boolean;
     procedure UpdateGardenEels;
     function LiveCreatures(Layer: TLayer): TArray<TLive>;
     procedure UpdateScatter;
     function MoonFromFull: Single;
     procedure BuildSpawning;
     procedure SetMoon;
-    procedure ReleaseSpawn;
+    procedure ReleaseSpawn(K: Integer);
     procedure UpdateSpawning;
     function CurrentHour: Single;
     procedure UpdateLight;
@@ -166,10 +192,13 @@ type
     procedure ApplyTestOptions;
     procedure Tick;
   public
-    { needs a current OpenGL context: images are loaded as the scene is built }
+    { needs a current OpenGL context: images are loaded as the scene is built.
+      The window's shape at this moment decides how wide the reef is. }
     constructor Create(const ASettings: TReefSettings; WinW, WinH: Integer);
     destructor Destroy; override;
     procedure SetView(WinW, WinH: Integer);
+    { where the clock may sit (window pixels), e.g. the main screen when the reef spans several }
+    procedure SetClockArea(const R: TRect);
     procedure Advance(Dt: Single);
     { draws into the part of the window whose bottom-left corner is at (OriginX, OriginY) }
     procedure Render(OriginX: Integer = 0; OriginY: Integer = 0);
@@ -185,6 +214,31 @@ const
   AmpFront = 160;
   AmpJelly = 60;
   AmpGlow = 120;
+  // how often each layer's background repeats (the width of its image as drawn)
+  FarPeriod = 2000;
+  MidPeriod = 2080;
+  NearPeriod = 2200;
+
+type
+  { Where a section's corals stand, as shifts from the original reef. Even sections use the original layout;
+    odd ones (which are also mirrored) a rearranged one, so a join does not look like a reflection. }
+  TLayout = record
+    Alt: Boolean;
+    Rock, Sponge, Stag2, Anemone: Single;
+  end;
+
+function Layout(K: Integer): TLayout;
+begin
+  Result := Default(TLayout);
+  if Odd(K) then
+  begin
+    Result.Alt := True;
+    Result.Rock := -1380;     // the rock (with its moray eel and sea fan) moves to the other end
+    Result.Sponge := 215;
+    Result.Stag2 := 60;
+    Result.Anemone := 960;
+  end;
+end;
 
 function Smoothstep(X: Single): Single;
 begin
@@ -205,6 +259,7 @@ end;
 constructor TOceanScene.Create(const ASettings: TReefSettings; WinW, WinH: Integer);
 var
   CamFar, CamMid, CamLight, CamNear, CamFront, CamFarLight, CamMidLight, CamGlow, CamJelly: TNode;
+  K: Integer;
 begin
   FSet := ASettings;
   FAnim := TAnimator.Create;
@@ -214,6 +269,9 @@ begin
   FTwins := TDictionary<string, TTwin>.Create;
   FRoot := TNode.Create(nkGroup);
   SetView(WinW, WinH);
+  FWide := Max(1, Round(FW / 1920));
+  FNearN := SecCount(NearPeriod, AmpNear, -140);
+  FMidN := SecCount(MidPeriod, AmpMid, -80);
 
   // how many fish slots are in use: 0 = a few, 1 = some, 2 = lots (all)
   FDensity := 0;
@@ -225,14 +283,13 @@ begin
 
   CamFar := FRoot.AddGroup('camFar');
   FLayers[lFarBack] := CamFar.AddGroup('farBack');
-  CamFar.AddPoster('reef_far').Pos(-40, 520).Size(2000, 440);
+  Tile(CamFar, 'reef_far', -40, 520, FarPeriod, 440, AmpFar);
   FLayers[lFar] := CamFar.AddGroup('farCreatures');
 
   FullPoster(FRoot, 'bg_water', 0.38);   // fog
 
   CamMid := FRoot.AddGroup('camMid');
-  // stored at three-quarter size
-  CamMid.AddPoster('reef_mid').Pos(-80, 580).Scale(1.3543, 1.3333);
+  Tile(CamMid, 'reef_mid', -80, 580, MidPeriod, 520, AmpMid);
   FMidDecor := CamMid.AddGroup('midDecor');
   FLayers[lMid] := CamMid.AddGroup('midCreatures');
 
@@ -243,10 +300,10 @@ begin
   FRays := CamLight.AddGroup('rays');
 
   CamNear := FRoot.AddGroup('camNear');
-  CamNear.AddPoster('sand').Pos(-140, 790).Scale(1.0743, 1);
+  Tile(CamNear, 'sand', -140, 790, NearPeriod, 300, AmpNear);
   FNearDecor := CamNear.AddGroup('nearDecor');
   FBubbles := CamNear.AddGroup('bubbles');
-  CamNear.AddPoster('sand_front').Pos(-140, 885).Scale(1.0743, 1.25);
+  Tile(CamNear, 'sand_front', -140, 885, NearPeriod, 250, AmpNear);
   FCaustics := CamNear.AddGroup('caustics');
   FGardenEels := CamNear.AddGroup('gardenEels');
   FLayers[lNear] := CamNear.AddGroup('nearCreatures');
@@ -256,10 +313,9 @@ begin
   FParticles := CamFront.AddGroup('particles');
 
   // day/night: the night shade and warm sunrise/sunset light; anything after these stays bright (glows)
-  FNightShade := FRoot.AddRect(1920, 1080, $020A1C);
+  FNightShade := FRoot.AddRect(FW, 1080, $020A1C);
   FNightShade.Opacity := 0;
-  FWarm := FRoot.AddPoster('warm_grad').Scale(30, 2);
-  FWarm.Opacity := 0;
+  FWarm := FullPoster(FRoot, 'warm_grad', 0);
 
   // Scuba Steve's torch beam at night: moves with the far layer, drawn above the night shade
   CamFarLight := FRoot.AddGroup('camFarLight');
@@ -272,7 +328,7 @@ begin
   FGlow := CamGlow.AddGroup('plankton');
   FGlow.Opacity := 0;
   // full-moon nights: the moon glowing through the surface, and coral spawning
-  FMoonGlow := CamGlow.AddPoster('moon_glow').Size(128, 128).Pos(900, -190).Scale(7, 3);
+  FMoonGlow := CamGlow.AddPoster('moon_glow').Size(128, 128).Pos(FW / 2 - 60, -190).Scale(7, 3);
   FMoonGlow.Opacity := 0;
   FMoonGlow.Visible := False;
   FSpawnG := CamGlow.AddGroup('spawning');
@@ -281,7 +337,7 @@ begin
   CamJelly := FRoot.AddGroup('camJelly');
   FLayers[lJelly] := CamJelly.AddGroup('jellyCreatures');
 
-  FRoot.AddPoster('vignette').Scale(4, 4);
+  FullPoster(FRoot, 'vignette', 1);
   FClockGrp := FRoot.AddGroup('clockGrp');
 
   // camera sway (parallax): each layer drifts by its own amount
@@ -305,10 +361,17 @@ begin
 
   BuildLight;
   BuildDecor;
-  BuildEel;
-  BuildShrimp;
+  SetLength(FShrimps, FNearN);
+  SetLength(FColonies, FNearN);
+  for K := 0 to FNearN - 1 do
+  begin
+    BuildEel(K);
+    BuildShrimp(K);
+    BuildGardenEels(K);
+  end;
+  FShrimpNext := Rnd(20, 40) * 1000;
+  FGardenEels.Visible := not Off('geel');
   BuildCaustics;
-  BuildGardenEels;
   BuildBubbles;
   BuildParticles;
   BuildPlankton;
@@ -352,32 +415,79 @@ begin
   Result := FSet.IsOff(Key);
 end;
 
+{ an image stretched over the whole reef (water, fog, sunset light, vignette) }
 function TOceanScene.FullPoster(Parent: TNode; const Img: string; Opacity: Single): TNode;
 begin
-  Result := Parent.AddPoster(Img).Size(1920, 1080);
+  Result := Parent.AddPoster(Img).Size(FW, 1080);
   Result.Opacity := Opacity;
 end;
 
-{ The scene is drawn to fill the window: scaled so that nothing outside the 1920 x 1080 design area shows.
-  On screens that are not 16:9 a little is cropped (mostly from the top, so the sand stays in view). }
+{ A background image repeated across the reef. Every other copy is mirrored, so each join is an edge meeting
+  its own reflection and no seam shows. }
+procedure TOceanScene.Tile(Parent: TNode; const Img: string; X0, Y, W, H, Amp: Single);
+const
+  Overlap = 8;
+var
+  K: Integer;
+  P: TNode;
+begin
+  for K := 0 to SecCount(W, Amp, X0) - 1 do
+  begin
+    // drawn a touch wider than its slot: the outermost pixels of some images are see-through, and without
+    // the overlap the water would show as a hairline at the join
+    P := Parent.AddPoster(Img).Size(W + 2 * Overlap, H);
+    if Odd(K) then P.Pos(X0 + (K + 1) * W + Overlap, Y).Scale(-1, 1) else P.Pos(X0 + K * W - Overlap, Y);
+  end;
+end;
+
+{ how many sections of the given width cover the reef (plus the layer's sway) }
+function TOceanScene.SecCount(Period, Amp, X0: Single): Integer;
+begin
+  Result := Max(1, Ceil((FW + Amp - X0) / Period - 0.001));
+end;
+
+{ A group for section K of a layer: things are placed in it with the coordinates of the original 1920-wide
+  reef. Odd sections are mirrored, like their background. }
+function TOceanScene.SecGroup(Parent: TNode; K: Integer; Period: Single): TNode;
+begin
+  Result := Parent.AddGroup;
+  if Odd(K) then Result.Pos(K * Period + 1920, 0).Scale(-1, 1) else Result.Pos(K * Period, 0);
+end;
+
+{ where a section's x lies in the whole reef }
+function TOceanScene.SecX(K: Integer; Period, X: Single): Single;
+begin
+  if Odd(K) then Result := K * Period + 1920 - X else Result := K * Period + X;
+end;
+
+{ The window's shape sets the reef's width once; after that the reef is scaled to fill the window, so nothing
+  outside it shows. A window less wide than 16:9 crops a little (mostly from the top, so the sand stays). }
 procedure TOceanScene.SetView(WinW, WinH: Integer);
 var
   S: Single;
 begin
   FWinW := Max(1, WinW);
   FWinH := Max(1, WinH);
-  S := MaxF(FWinW / 1920, FWinH / 1080);
+  if FW = 0 then FW := MaxF(1920, 1080 * FWinW / FWinH);
+  S := MaxF(FWinW / FW, FWinH / 1080);
   FViewScale := S;
   FView.A := S;
   FView.B := 0;
   FView.C := 0;
   FView.D := S;
-  FView.E := (FWinW - 1920 * S) / 2;
+  FView.E := (FWinW - FW * S) / 2;
   FView.F := (FWinH - 1080 * S) * 0.7;
   FVX0 := -FView.E / S;
   FVY0 := -FView.F / S;
   FVX1 := FVX0 + FWinW / S;
   FVY1 := FVY0 + FWinH / S;
+end;
+
+procedure TOceanScene.SetClockArea(const R: TRect);
+begin
+  FClockArea := R;
+  FHasClockArea := True;
+  if FClockOn then PlaceClock(FClockIdx);
 end;
 
 { ---------- sunlight: rippling surface + light shafts ---------- }
@@ -386,24 +496,28 @@ procedure TOceanScene.BuildLight;
 const
   Xs: array [0 .. 5] of Single = (120, 480, 820, 1150, 1480, 1760);
 var
-  I: Integer;
+  I, S: Integer;
+  X: Single;
   P: TNode;
   A: TAnim;
 begin
   FSurface.Pos(-200, -24);
-  // stored at half size
-  for I := 0 to 2 do FSurface.AddPoster('surface').Size(2049, 320).Pos(I * 2049, 0);
+  // stored at half size; the strip slides left by one image and starts again
+  for I := 0 to Ceil((FW + AmpLight + 2249) / 2049) - 1 do FSurface.AddPoster('surface').Size(2049, 320).Pos(I * 2049, 0);
   A := FAnim.New(90, True);
   A.KeysV(FSurface, fTranslation, [0, 1], [V(-200, -24), V(-2249, -24)]);
   A.Start;
 
-  for I := 0 to High(Xs) do
-  begin
-    // ray.png is stored at half size, so it is scaled 2x
-    P := FRays.AddPoster('ray').Pos(Xs[I] + Rnd(-60, 60), -60).Pivot(100, 0).Scale(Rnd(1.2, 2.6), 2.0);
-    P.Rot := Rnd(0.16, 0.26);
-    FAnim.LoopF(P, fOpacity, 0.3, 0.2, Rnd(7, 13), Rnd(0, 6.28));
-  end;
+  for S := 0 to Ceil(FW / 1920) - 1 do
+    for I := 0 to High(Xs) do
+    begin
+      X := Xs[I] + S * 1920;
+      if X > FW + 150 then Continue;
+      // ray.png is stored at half size, so it is scaled 2x
+      P := FRays.AddPoster('ray').Pos(X + Rnd(-60, 60), -60).Pivot(100, 0).Scale(Rnd(1.2, 2.6), 2.0);
+      P.Rot := Rnd(0.16, 0.26);
+      FAnim.LoopF(P, fOpacity, 0.3, 0.2, Rnd(7, 13), Rnd(0, 6.28));
+    end;
 end;
 
 { ---------- caustics: rippling light network on the sea floor ---------- }
@@ -419,7 +533,7 @@ begin
     Lg := FCaustics.AddGroup;
     Lg.Opacity := IfThen(I = 0, 0.24, 0.17);
     Lg.Scale(1, 0.9);
-    for K := 0 to 3 do
+    for K := 0 to Ceil((FW + AmpNear + 1326) / 1026) - 1 do
       Lg.AddPoster(IfThen(I = 0, 'caustics_a', 'caustics_b')).Size(1026, 256).Pos(K * 1026, 0);
     // the two layers slide in opposite directions
     A := FAnim.New(IfThen(I = 0, 40, 57), True);
@@ -454,6 +568,9 @@ begin
 end;
 
 procedure TOceanScene.BuildDecor;
+var
+  K: Integer;
+  L: TLayout;
 
   procedure AddDecor(Parent: TNode; const Items: array of TDecor; Tinted: Boolean; Scl: Single);
   var
@@ -474,25 +591,45 @@ procedure TOceanScene.BuildDecor;
   end;
 
 begin
-  AddDecor(FNearDecor, [
-    D('kelp', -70, 100, 0.035, 7.5, 85, 1000),
-    D('seafan', 1640, 495, 0.025, 9, 190, 420),
-    D('coral_stag', 110, 575),
-    D('sponge', 435, 575),
-    // seagrass on both sides of the anemone, behind it (the right one is the mirrored image)
-    D('seagrass', 650, 695, 0.07, 4.5, 110, 240),
-    D('seagrass_l', 895, 700, 0.06, 5.1, 110, 240),
-    D('anemone', 720, 690, 0, 5, 160, 240, 0.03, -0.03),
-    D('coral_brain', 1010, 725),
-    D('coral_stag2', 1290, 620),
-    D('rock', 1420, 605),
-    D('seagrass', 1940, 690, 0.06, 5.2, 110, 240),
-    D('kelp', 1840, 150, 0.03, 8.3, 85, 1000)], False, 1.0);
+  // every section of the reef has its corals; odd sections are mirrored and laid out differently
+  SetLength(FNearSec, FNearN);
+  for K := 0 to FNearN - 1 do
+  begin
+    FNearSec[K] := SecGroup(FNearDecor, K, NearPeriod);
+    L := Layout(K);
+    if L.Alt then
+      AddDecor(FNearSec[K], [
+        D('kelp', 1090, 130, 0.035, 7.9, 85, 1000),
+        D('seafan', 1640 + L.Rock, 495, 0.025, 9, 190, 420),
+        D('sponge', 435 + L.Sponge, 575),
+        D('seagrass', 650 + L.Anemone, 695, 0.07, 4.5, 110, 240),
+        D('seagrass_l', 895 + L.Anemone, 700, 0.06, 5.1, 110, 240),
+        D('anemone', 720 + L.Anemone, 690, 0, 5, 160, 240, 0.03, -0.03),
+        D('coral_brain', 1010, 725),
+        D('coral_stag2', 1290 + L.Stag2, 620),
+        D('rock', 1420 + L.Rock, 605)], False, 1.0)
+    else
+    AddDecor(FNearSec[K], [
+      D('kelp', -70, 100, 0.035, 7.5, 85, 1000),
+      D('seafan', 1640, 495, 0.025, 9, 190, 420),
+      D('coral_stag', 110, 575),
+      D('sponge', 435, 575),
+      // seagrass on both sides of the anemone, behind it (the right one is the mirrored image)
+      D('seagrass', 650, 695, 0.07, 4.5, 110, 240),
+      D('seagrass_l', 895, 700, 0.06, 5.1, 110, 240),
+      D('anemone', 720, 690, 0, 5, 160, 240, 0.03, -0.03),
+      D('coral_brain', 1010, 725),
+      D('coral_stag2', 1290, 620),
+      D('rock', 1420, 605),
+      D('seagrass', 1940, 690, 0.06, 5.2, 110, 240),
+      D('kelp', 1840, 150, 0.03, 8.3, 85, 1000)], False, 1.0);
+  end;
 
-  AddDecor(FMidDecor, [
-    D('kelp', 360, 260, 0.04, 9.5, 85, 1000),
-    D('kelp', 1320, 220, 0.035, 8.7, 85, 1000),
-    D('seagrass', 900, 760, 0.06, 5.8, 110, 240)], True, 0.75);
+  for K := 0 to FMidN - 1 do
+    AddDecor(SecGroup(FMidDecor, K, MidPeriod), [
+      D('kelp', 360, 260, 0.04, 9.5, 85, 1000),
+      D('kelp', 1320, 220, 0.035, 8.7, 85, 1000),
+      D('seagrass', 900, 760, 0.06, 5.8, 110, 240)], True, 0.75);
 end;
 
 { ---------- bubble streams ---------- }
@@ -501,34 +638,43 @@ procedure TOceanScene.BuildBubbles;
 const
   Emitters: array [0 .. 2, 0 .. 2] of Integer = ((575, 880, 10), (1170, 880, 6), (1700, 900, 5));
 var
-  E, I, K: Integer;
-  B: TNode;
+  S, E, I, K: Integer;
+  G, B: TNode;
   A: TAnim;
   Sz, Ph, X0, T: Single;
+  Shift: array [0 .. 2] of Single;
   Keys: array [0 .. 12] of Single;
   Vals: array [0 .. 12] of TVec2;
 begin
-  for E := 0 to 2 do
-    for I := 0 to Emitters[E, 2] - 1 do
-    begin
-      B := FBubbles.AddPoster('bubble');
-      Sz := Rnd(10, 30);
-      B.Scale(Sz / 64, Sz / 64);
-      B.Opacity := Rnd(0.5, 0.9);
-      A := FAnim.New(Rnd(6, 10), True);
-      A.Delay := I * Rnd(0.5, 1.1);
-      Ph := Rnd(0, 6.28);
-      X0 := Emitters[E, 0] + Rnd(-15, 15);
-      for K := 0 to 12 do
+  for S := 0 to FNearN - 1 do
+  begin
+    G := SecGroup(FBubbles, S, NearPeriod);
+    // the streams rise from the sponge, the brain coral and the rock
+    Shift[0] := Layout(S).Sponge;
+    Shift[1] := 0;
+    Shift[2] := Layout(S).Rock;
+    for E := 0 to 2 do
+      for I := 0 to Emitters[E, 2] - 1 do
       begin
-        T := K / 12;
-        Keys[K] := T;
-        Vals[K] := V(X0 + 14 * Sin(T * 9 + Ph) + T * 40, Emitters[E, 1] - T * 1020);
+        B := G.AddPoster('bubble');
+        Sz := Rnd(10, 30);
+        B.Scale(Sz / 64, Sz / 64);
+        B.Opacity := Rnd(0.5, 0.9);
+        A := FAnim.New(Rnd(6, 10), True);
+        A.Delay := I * Rnd(0.5, 1.1);
+        Ph := Rnd(0, 6.28);
+        X0 := Emitters[E, 0] + Shift[E] + Rnd(-15, 15);
+        for K := 0 to 12 do
+        begin
+          T := K / 12;
+          Keys[K] := T;
+          Vals[K] := V(X0 + 14 * Sin(T * 9 + Ph) + T * 40, Emitters[E, 1] - T * 1020);
+        end;
+        A.KeysV(B, fTranslation, Keys, Vals);
+        B.Pos(Vals[0].X, Vals[0].Y);
+        A.Start;
       end;
-      A.KeysV(B, fTranslation, Keys, Vals);
-      B.Pos(Vals[0].X, Vals[0].Y);
-      A.Start;
-    end;
+  end;
 end;
 
 { ---------- floating particles ("marine snow") in front of everything ---------- }
@@ -540,13 +686,13 @@ var
   Sz: Single;
   Base: TVec2;
 begin
-  for I := 0 to 44 do
+  for I := 0 to Round(45 * FW / 1920) - 1 do
   begin
     P := FParticles.AddPoster('particle');
     Sz := Rnd(3, 11);
     P.Scale(Sz / 32, Sz / 32);
     P.Opacity := Rnd(0.15, 0.5);
-    Base := V(Rnd(-150, 2070), Rnd(0, 1080));
+    Base := V(Rnd(-150, FW + 150), Rnd(0, 1080));
     P.Pos(Base.X, Base.Y);
     FAnim.LoopV(P, fTranslation, Base, V(Rnd(-60, 60), Rnd(30, 90)), Rnd(16, 34), Rnd(0, 6.28));
   end;
@@ -554,14 +700,16 @@ end;
 
 { ---------- moray eel that peeks out of the rock cave ---------- }
 
-procedure TOceanScene.BuildEel;
+procedure TOceanScene.BuildEel(K: Integer);
 var
-  Outer, Head, Jaw: TNode;
+  Wrap, Outer, Head, Jaw: TNode;
   A: TAnim;
   InP, PeekP, OutP: TVec2;
+  Dx: Single;
 begin
-  FEelWrap := FNearDecor.AddGroup('eelWrap');
-  Outer := FEelWrap.AddGroup;
+  Dx := Layout(K).Rock;
+  Wrap := FNearSec[K].AddGroup('eelWrap');
+  Outer := Wrap.AddGroup;
   Outer.Scale(0.8, 0.8);
   Head := Outer.AddGroup;
   Head.Pivot(255, 78);
@@ -570,18 +718,20 @@ begin
 
   // the cave mouth in the rock poster: nothing right of x = 1612 (deep inside the hole) is drawn,
   // so the eel never paints over the rock
-  FEelWrap.SetClip(1150, 690, 462, 280);
-  FEelWrap.AddPoster('eel_cave').Pos(1491, 764);
+  Wrap.SetClip(1150 + Dx, 690, 462, 280);
+  Wrap.AddPoster('eel_cave').Pos(1491 + Dx, 764);
 
-  OutP := V(1392, 765);
-  PeekP := V(1500, 765);
-  InP := V(1614, 765);
+  OutP := V(1392 + Dx, 765);
+  PeekP := V(1500 + Dx, 765);
+  InP := V(1614 + Dx, 765);
   Outer.Pos(InP.X, InP.Y);
   A := FAnim.New(24, True);
+  // the eels of different sections keep different hours
+  A.Delay := K * 7.5;
   A.KeysV(Outer, fTranslation, [0, 0.12, 0.17, 0.25, 0.33, 0.62, 0.66, 0.72, 1],
-    [InP, InP, PeekP, PeekP, OutP, OutP, V(1425, 765), InP, InP]);
+    [InP, InP, PeekP, PeekP, OutP, OutP, V(1425 + Dx, 765), InP, InP]);
   A.Start;
-  FEelWrap.Visible := not Off('eel');
+  Wrap.Visible := not Off('eel');
   FAnim.LoopF(Jaw, fRotation, 0.13, 0.13, 2.8, 0);
   FAnim.LoopF(Head, fRotation, 0, 0.05, 4.5, 1);
 end;
@@ -593,71 +743,77 @@ const
   ShrimpTubes: array [0 .. 3, 0 .. 2] of Single = ((504.6, 695.7, 0.6), (591, 612, 0.6), (661.2, 725.6, 0.56),
     (614.8, 797.4, 0.52));
 
-procedure TOceanScene.BuildShrimp;
+procedure TOceanScene.BuildShrimp(K: Integer);
 var
   I, Idx: Integer;
+  Sec: TNode;
 begin
+  Sec := FNearSec[K];
   // drawn right after the sponge, so plants in front of the sponge stay in front of the shrimp
-  Idx := FNearDecor.Count;
-  for I := 0 to FNearDecor.Count - 1 do
-    if FNearDecor[I].Name = 'sponge' then Idx := I + 1;
-  FShrimpClip := FNearDecor.InsertGroup(Idx);
-  FShrimpG := FShrimpClip.AddGroup;
-  // outer group: position + rotation (pivot at the rim); inner group: scale (about its origin)
-  FShrimpIn := FShrimpG.AddGroup;
-  FShrimpBody := FShrimpIn.AddPoster('shrimp');
-  FShrimpFinger := FShrimpIn.AddPoster('shrimp_finger');
-  FShrimpBub := FShrimpIn.AddPoster('bubble').Pivot(32, 32);
-  FShrimpBub.Opacity := 0;
-  FShrimpLast := -1;
-  FShrimpAnim := FAnim.New(1);
-  PlaceShrimp(0, False);
-  FShrimpClip.Visible := not Off('shrimp');
-  FShrimpNext := Rnd(20, 40) * 1000;
+  Idx := Sec.Count;
+  for I := 0 to Sec.Count - 1 do
+    if Sec[I].Name = 'sponge' then Idx := I + 1;
+  with FShrimps[K] do
+  begin
+    Clip := Sec.InsertGroup(Idx);
+    G := Clip.AddGroup;
+    // outer group: position + rotation (pivot at the rim); inner group: scale (about its origin)
+    Inner := G.AddGroup;
+    Body := Inner.AddPoster('shrimp');
+    Finger := Inner.AddPoster('shrimp_finger');
+    Bub := Inner.AddPoster('bubble').Pivot(32, 32);
+    Bub.Opacity := 0;
+    Last := -1;
+    Dx := Layout(K).Sponge;
+    Anim := FAnim.New(1);
+    Clip.Visible := not Off('shrimp');
+  end;
+  PlaceShrimp(FShrimps[K], 0, False);
 end;
 
 { put the (hidden) shrimp in tube I; Flip = big claw on the left }
-procedure TOceanScene.PlaceShrimp(I: Integer; Flip: Boolean);
+procedure TOceanScene.PlaceShrimp(var Sh: TShrimp; I: Integer; Flip: Boolean);
 var
   Cx, Cy, S: Single;
 begin
-  Cx := ShrimpTubes[I, 0];
+  Cx := ShrimpTubes[I, 0] + Sh.Dx;
   Cy := ShrimpTubes[I, 1];
   S := ShrimpTubes[I, 2];
   // only draw above the tube's rim, so the shrimp comes up out of the hole
-  FShrimpClip.SetClip(Cx - 80, Cy - 240, 160, 243);
-  FShrimpIn.Scale(S, S);
-  FShrimpG.Pivot(60 * S, 118 * S);
-  FShrimpG.Rot := 0;
-  FShrimpX := Cx - 60 * S;
-  FShrimpY := Cy;
-  FShrimpS := S;
-  FShrimpG.Pos(FShrimpX, Cy + 8 * S);
+  Sh.Clip.SetClip(Cx - 80, Cy - 240, 160, 243);
+  Sh.Inner.Scale(S, S);
+  Sh.G.Pivot(60 * S, 118 * S);
+  Sh.G.Rot := 0;
+  Sh.X := Cx - 60 * S;
+  Sh.Y := Cy;
+  Sh.S := S;
+  Sh.G.Pos(Sh.X, Cy + 8 * S);
   if Flip then
   begin
-    FShrimpBody.SetImage('shrimp_l');
-    FShrimpFinger.SetImage('shrimp_finger_l');
-    FShrimpFinger.Pos(18, 8).Pivot(18, 28);
-    FShrimpTip := V(30, 20);
-    FShrimpOpen := -0.8;
+    Sh.Body.SetImage('shrimp_l');
+    Sh.Finger.SetImage('shrimp_finger_l');
+    Sh.Finger.Pos(18, 8).Pivot(18, 28);
+    Sh.Tip := V(30, 20);
+    Sh.Open := -0.8;
   end
   else
   begin
-    FShrimpBody.SetImage('shrimp');
-    FShrimpFinger.SetImage('shrimp_finger');
-    FShrimpFinger.Pos(78, 8).Pivot(6, 28);
-    FShrimpTip := V(90, 20);
-    FShrimpOpen := 0.8;
+    Sh.Body.SetImage('shrimp');
+    Sh.Finger.SetImage('shrimp_finger');
+    Sh.Finger.Pos(78, 8).Pivot(6, 28);
+    Sh.Tip := V(90, 20);
+    Sh.Open := 0.8;
   end;
-  FShrimpFinger.Rot := 0;
+  Sh.Finger.Rot := 0;
 end;
 
 procedure TOceanScene.UpdateShrimp;
 var
-  Ti: Integer;
-  X, O, T: Single;
+  K, Ti: Integer;
+  O, T: Single;
   Hid, Peek, Full, Tip, Up, Small, Big: TVec2;
   A: TAnim;
+  Sh: TShrimp;
 begin
   if FNow < FShrimpNext then Exit;
   if Off('shrimp') then
@@ -665,52 +821,60 @@ begin
     FShrimpNext := FNow + 30000;
     Exit;
   end;
+  // one of the sponges whose shrimp is not already out
+  K := Random(Length(FShrimps));
+  if FShrimps[K].Anim.Running then
+  begin
+    FShrimpNext := FNow + 2000;
+    Exit;
+  end;
   // a random tube, never the same one twice in a row
-  if FShrimpLast < 0 then
+  if FShrimps[K].Last < 0 then
     Ti := Random(Length(ShrimpTubes))
   else
   begin
     Ti := Random(Length(ShrimpTubes) - 1);
-    if Ti >= FShrimpLast then Inc(Ti);
+    if Ti >= FShrimps[K].Last then Inc(Ti);
   end;
-  FShrimpLast := Ti;
-  PlaceShrimp(Ti, Random < 0.5);
-  X := FShrimpX;
-  Hid := V(X, FShrimpY + 8 * FShrimpS);
-  Peek := V(X, FShrimpY - 70 * FShrimpS);
-  Full := V(X, FShrimpY - 118 * FShrimpS);
-  O := FShrimpOpen;
-  Tip := V(FShrimpTip.X - 32, FShrimpTip.Y - 32);
+  FShrimps[K].Last := Ti;
+  PlaceShrimp(FShrimps[K], Ti, Random < 0.5);
+  Sh := FShrimps[K];
+  Hid := V(Sh.X, Sh.Y + 8 * Sh.S);
+  Peek := V(Sh.X, Sh.Y - 70 * Sh.S);
+  Full := V(Sh.X, Sh.Y - 118 * Sh.S);
+  O := Sh.Open;
+  Tip := V(Sh.Tip.X - 32, Sh.Tip.Y - 32);
   Up := V(Tip.X + 4, Tip.Y - 34);
   Small := V(0.05, 0.05);
   Big := V(0.42, 0.42);
-  A := FShrimpAnim;
+  A := Sh.Anim;
   A.Stop;
   A.ClearTracks;
   if Random < 0.3 then
   begin
     // shy: just peeks, looks around and ducks back in
     T := 5.0;
-    A.KeysV(FShrimpG, fTranslation, [0, 0.14, 0.7, 0.75, 1], [Hid, Peek, Peek, Hid, Hid]);
-    A.KeysF(FShrimpG, fRotation, [0, 0.2, 0.35, 0.5, 0.62, 1], [0, 0, 0.12, 0.12, 0, 0]);
-    A.KeysF(FShrimpFinger, fRotation, [0, 1], [0, 0]);
-    A.KeysF(FShrimpBub, fOpacity, [0, 1], [0, 0]);
+    A.KeysV(Sh.G, fTranslation, [0, 0.14, 0.7, 0.75, 1], [Hid, Peek, Peek, Hid, Hid]);
+    A.KeysF(Sh.G, fRotation, [0, 0.2, 0.35, 0.5, 0.62, 1], [0, 0, 0.12, 0.12, 0, 0]);
+    A.KeysF(Sh.Finger, fRotation, [0, 1], [0, 0]);
+    A.KeysF(Sh.Bub, fOpacity, [0, 1], [0, 0]);
   end
   else
   begin
     // bold: comes out, looks left and right, snaps its claw twice (pop!), then darts back in
     T := 10.0;
-    A.KeysV(FShrimpG, fTranslation, [0, 0.07, 0.2, 0.25, 0.76, 0.785, 1], [Hid, Peek, Peek, Full, Full, Hid, Hid]);
-    A.KeysF(FShrimpG, fRotation, [0, 0.26, 0.34, 0.46, 0.54, 0.66, 0.73, 1], [0, 0, 0.16, 0.16, -0.14, -0.14, 0, 0]);
-    A.KeysF(FShrimpFinger, fRotation, [0, 0.36, 0.41, 0.46, 0.465, 0.56, 0.6, 0.65, 0.655, 1],
+    A.KeysV(Sh.G, fTranslation, [0, 0.07, 0.2, 0.25, 0.76, 0.785, 1], [Hid, Peek, Peek, Full, Full, Hid, Hid]);
+    A.KeysF(Sh.G, fRotation, [0, 0.26, 0.34, 0.46, 0.54, 0.66, 0.73, 1], [0, 0, 0.16, 0.16, -0.14, -0.14, 0, 0]);
+    A.KeysF(Sh.Finger, fRotation, [0, 0.36, 0.41, 0.46, 0.465, 0.56, 0.6, 0.65, 0.655, 1],
       [0, 0, O, O, 0, 0, O, O, 0, 0]);
-    A.KeysF(FShrimpBub, fOpacity, [0, 0.465, 0.47, 0.54, 0.655, 0.66, 0.73, 1], [0, 0, 1, 0, 0, 1, 0, 0]);
-    A.KeysV(FShrimpBub, fScale, [0, 0.465, 0.54, 0.655, 0.73, 1], [Small, Small, Big, Small, Big, Big]);
-    A.KeysV(FShrimpBub, fTranslation, [0, 0.465, 0.54, 0.655, 0.73, 1], [Tip, Tip, Up, Tip, Up, Up]);
+    A.KeysF(Sh.Bub, fOpacity, [0, 0.465, 0.47, 0.54, 0.655, 0.66, 0.73, 1], [0, 0, 1, 0, 0, 1, 0, 0]);
+    A.KeysV(Sh.Bub, fScale, [0, 0.465, 0.54, 0.655, 0.73, 1], [Small, Small, Big, Small, Big, Big]);
+    A.KeysV(Sh.Bub, fTranslation, [0, 0.465, 0.54, 0.655, 0.73, 1], [Tip, Tip, Up, Tip, Up, Up]);
   end;
   A.Duration := T;
   A.Start;
-  FShrimpNext := FNow + T * 1000 + Rnd(30, 75) * 1000;
+  // a wider reef has more sponges, so a shrimp shows somewhere more often
+  FShrimpNext := FNow + (T * 1000 + Rnd(30, 75) * 1000) / Length(FShrimps);
 end;
 
 { ---------- bioluminescent plankton (only visible at night) ---------- }
@@ -722,12 +886,12 @@ var
   Sz: Single;
   Base: TVec2;
 begin
-  for I := 0 to 69 do
+  for I := 0 to Round(70 * FW / 1920) - 1 do
   begin
     P := FGlow.AddPoster('glow_dot');
     Sz := Rnd(5, 16);
     P.Scale(Sz / 32, Sz / 32);
-    Base := V(Rnd(-120, 2040), Rnd(60, 1060));
+    Base := V(Rnd(-120, FW + 120), Rnd(60, 1060));
     P.Pos(Base.X, Base.Y);
     FAnim.LoopV(P, fTranslation, Base, V(Rnd(-50, 50), Rnd(25, 70)), Rnd(14, 30), Rnd(0, 6.28));
     FAnim.LoopF(P, fOpacity, 0.55, 0.45, Rnd(2, 6), Rnd(0, 6.28));
@@ -736,7 +900,7 @@ end;
 
 { ---------- garden eels: a colony in the open sand that ducks into its burrows ---------- }
 
-procedure TOceanScene.BuildGardenEels;
+procedure TOceanScene.BuildGardenEels(K: Integer);
 const
   // x, base y, scale, colour (0 = spotted, 1 = orange)
   Spots: array [0 .. 6, 0 .. 3] of Single = ((1035, 952, 0.6, 0), (1090, 937, 0.53, 1), (1142, 965, 0.67, 0),
@@ -744,30 +908,35 @@ const
 var
   I: Integer;
   X, Y, S, H: Single;
-  Wrap, Po: TNode;
+  Sec, Wrap, Po: TNode;
 begin
-  SetLength(FGeels, Length(Spots));
-  for I := 0 to High(Spots) do
+  Sec := SecGroup(FGardenEels, K, NearPeriod);
+  with FColonies[K] do
   begin
-    X := Spots[I, 0];
-    Y := Spots[I, 1];
-    S := Spots[I, 2];
-    FGardenEels.AddPoster('geel_hole').Scale(S * 1.2, S * 1.2).Pos(X - 24 * S, Y - 8.4 * S);
-    // the eel is only drawn above its burrow, so it slides down into the sand
-    Wrap := FGardenEels.AddGroup;
-    H := 240 * S;
-    Wrap.SetClip(X - 70, Y - H - 70, 140, H + 70);
-    FGeels[I].Inner := Wrap.AddGroup;
-    Po := FGeels[I].Inner.AddPoster(IfThen(Spots[I, 3] = 0, 'geel_a', 'geel_b'));
-    Po.Pivot(18, 240).Scale(S, S).Pos(X - 18, Y - 240);
-    // they all lean into the same current, a little out of step
-    FAnim.LoopF(Po, fRotation, 0.02, 0.06, Rnd(3.6, 4.2), I * 0.5);
-    FGeels[I].X := X;
-    FGeels[I].H := H + 10;
-    FGeels[I].Anim := FAnim.New(1);
+    SetLength(Eels, Length(Spots));
+    X0 := Min(SecX(K, NearPeriod, 1035), SecX(K, NearPeriod, 1356));
+    X1 := Max(SecX(K, NearPeriod, 1035), SecX(K, NearPeriod, 1356));
+    Solo := Rnd(15, 30) * 1000;
+    for I := 0 to High(Spots) do
+    begin
+      X := Spots[I, 0];
+      Y := Spots[I, 1];
+      S := Spots[I, 2];
+      Sec.AddPoster('geel_hole').Scale(S * 1.2, S * 1.2).Pos(X - 24 * S, Y - 8.4 * S);
+      // the eel is only drawn above its burrow, so it slides down into the sand
+      Wrap := Sec.AddGroup;
+      H := 240 * S;
+      Wrap.SetClip(X - 70, Y - H - 70, 140, H + 70);
+      Eels[I].Inner := Wrap.AddGroup;
+      Po := Eels[I].Inner.AddPoster(IfThen(Spots[I, 3] = 0, 'geel_a', 'geel_b'));
+      Po.Pivot(18, 240).Scale(S, S).Pos(X - 18, Y - 240);
+      // they all lean into the same current, a little out of step
+      FAnim.LoopF(Po, fRotation, 0.02, 0.06, Rnd(3.6, 4.2), I * 0.5);
+      Eels[I].X := SecX(K, NearPeriod, X);
+      Eels[I].H := H + 10;
+      Eels[I].Anim := FAnim.New(1);
+    end;
   end;
-  FGeSolo := Rnd(15, 30) * 1000;
-  FGardenEels.Visible := not Off('geel');
 end;
 
 procedure TOceanScene.MoveGeel(var E: TGeel; ToY, Duration, Delay: Single; Ease: TEase);
@@ -785,7 +954,7 @@ begin
 end;
 
 { something swimming close to the sand near the colony? X = where it is }
-function TOceanScene.GeelThreat(out X: Single): Boolean;
+function TOceanScene.GeelThreat(const Col: TColony; out X: Single): Boolean;
 var
   C: TLive;
   Big: Boolean;
@@ -799,7 +968,7 @@ begin
       M0 := 120;
       if Big then M0 := 260;
       if C.Kind = 'crab' then M0 := 60;
-      if (C.X > 1035 - M0) and (C.X < 1356 + M0) and ((C.Y > 740) or (Big and (C.Y > 450))) then
+      if (C.X > Col.X0 - M0) and (C.X < Col.X1 + M0) and ((C.Y > 740) or (Big and (C.Y > 450))) then
       begin
         X := C.X;
         Exit(True);
@@ -812,47 +981,50 @@ procedure TOceanScene.UpdateGardenEels;
 var
   Night, Threat: Boolean;
   Tx: Single;
-  I: Integer;
+  K, I: Integer;
 begin
   if Off('geel') then Exit;
   // garden eels sleep inside their burrows at night
   Night := FDay < 0.2;
-  Threat := (not Night) and GeelThreat(Tx);
-  if Night or Threat then
-  begin
-    if not FGeDown then
+  for K := 0 to High(FColonies) do
+    with FColonies[K] do
     begin
-      FGeDown := True;
-      for I := 0 to High(FGeels) do
-        if Night then
-          MoveGeel(FGeels[I], FGeels[I].H, 1.5, Rnd(0, 3), eLinear)
-        else
-          // a quick wave of ducking, starting nearest the visitor
-          MoveGeel(FGeels[I], FGeels[I].H, 0.3, Abs(FGeels[I].X - Tx) / 1600, eLinear);
+      Threat := (not Night) and GeelThreat(FColonies[K], Tx);
+      if Night or Threat then
+      begin
+        if not Down then
+        begin
+          Down := True;
+          for I := 0 to High(Eels) do
+            if Night then
+              MoveGeel(Eels[I], Eels[I].H, 1.5, Rnd(0, 3), eLinear)
+            else
+              // a quick wave of ducking, starting nearest the visitor
+              MoveGeel(Eels[I], Eels[I].H, 0.3, Abs(Eels[I].X - Tx) / 1600, eLinear);
+        end;
+        UpAt := FNow + Rnd(3500, 6000);
+      end
+      else if Down and (FNow >= UpAt) then
+      begin
+        Down := False;
+        for I := 0 to High(Eels) do MoveGeel(Eels[I], 0, Rnd(2.2, 3.4), Rnd(0, 2.5), eOutQuad);
+        Solo := FNow + Rnd(15, 35) * 1000;
+      end
+      else if (not Down) and (FNow >= Solo) then
+      begin
+        // now and then one eel ducks on its own and slowly comes back up
+        I := Random(Length(Eels));
+        Eels[I].Anim.Stop;
+        Eels[I].Anim.ClearTracks;
+        Eels[I].Anim.Duration := 6;
+        Eels[I].Anim.Delay := 0;
+        Eels[I].Anim.Ease := eLinear;
+        Eels[I].Anim.KeysV(Eels[I].Inner, fTranslation, [0, 0.05, 0.5, 1],
+          [V(0, 0), V(0, Eels[I].H), V(0, Eels[I].H), V(0, 0)]);
+        Eels[I].Anim.Start;
+        Solo := FNow + Rnd(12, 30) * 1000;
+      end;
     end;
-    FGeUpAt := FNow + Rnd(3500, 6000);
-  end
-  else if FGeDown and (FNow >= FGeUpAt) then
-  begin
-    FGeDown := False;
-    for I := 0 to High(FGeels) do MoveGeel(FGeels[I], 0, Rnd(2.2, 3.4), Rnd(0, 2.5), eOutQuad);
-    FGeSolo := FNow + Rnd(15, 35) * 1000;
-  end
-  else if (not FGeDown) and (FNow >= FGeSolo) then
-  begin
-    // now and then one eel ducks on its own and slowly comes back up
-    with FGeels[Random(Length(FGeels))] do
-    begin
-      Anim.Stop;
-      Anim.ClearTracks;
-      Anim.Duration := 6;
-      Anim.Delay := 0;
-      Anim.Ease := eLinear;
-      Anim.KeysV(Inner, fTranslation, [0, 0.05, 0.5, 1], [V(0, 0), V(0, H), V(0, H), V(0, 0)]);
-      Anim.Start;
-    end;
-    FGeSolo := FNow + Rnd(12, 30) * 1000;
-  end;
 end;
 
 { centre, scale and node of every creature currently placed in a layer (layer coordinates) }
@@ -955,7 +1127,7 @@ var
   I: Integer;
 begin
   FAnim.LoopV(FMoonGlow, fScale, V(7, 3), V(0.35, 0.15), 7, 0);
-  SetLength(FSpawnPool, 80);
+  SetLength(FSpawnPool, 80 * FNearN);
   for I := 0 to High(FSpawnPool) do
   begin
     FSpawnPool[I].P := FSpawnG.AddPoster('spawn_dot');
@@ -974,36 +1146,44 @@ begin
   if FForceSpawn then FMoonK := 1;
 end;
 
-procedure TOceanScene.ReleaseSpawn;
+{ the corals of section K release a cloud of spawn }
+procedure TOceanScene.ReleaseSpawn(K: Integer);
 const
   // where the corals release their spawn (x from, x to, y from, y to): staghorns and the brain coral
   Src: array [0 .. 3, 0 .. 3] of Single = ((170, 470, 610, 760), (1325, 1590, 650, 770), (1050, 1300, 790, 830),
     (200, 430, 640, 740));
 var
-  S, N, I, K: Integer;
-  X0, Y0, Dur, Delay, Rise, Drift, Ph, T, Sz: Single;
+  S, N, I, J: Integer;
+  X0, Y0, Dur, Delay, Rise, Drift, Ph, T, Sz, Dx: Single;
   Keys: array [0 .. 10] of Single;
   Vals: array [0 .. 10] of TVec2;
 begin
   S := Random(Length(Src));
+  // the rearranged sections have no first staghorn: their other staghorn and the brain coral spawn
+  Dx := 0;
+  if Layout(K).Alt then
+  begin
+    S := 1 + Random(2);
+    if S = 1 then Dx := Layout(K).Stag2;
+  end;
   N := Trunc(Rnd(18, 30));
   for I := 0 to High(FSpawnPool) do
     if (N > 0) and (FNow >= FSpawnPool[I].FreeAt) then
       with FSpawnPool[I] do
       begin
         Dec(N);
-        X0 := Rnd(Src[S, 0], Src[S, 1]);
+        X0 := SecX(K, NearPeriod, Rnd(Src[S, 0], Src[S, 1]) + Dx);
         Y0 := Rnd(Src[S, 2], Src[S, 3]);
         Dur := Rnd(16, 26);
         Delay := Rnd(0, 4);
         Rise := Rnd(550, 900);
         Drift := Rnd(-120, 120);
         Ph := Rnd(0, 6.28);
-        for K := 0 to 10 do
+        for J := 0 to 10 do
         begin
-          T := K / 10;
-          Keys[K] := T;
-          Vals[K] := V(X0 + Drift * T + 22 * Sin(T * 7 + Ph), Y0 - Rise * T);
+          T := J / 10;
+          Keys[J] := T;
+          Vals[J] := V(X0 + Drift * T + 22 * Sin(T * 7 + Ph), Y0 - Rise * T);
         end;
         Sz := Rnd(0.55, 1.15);
         Anim.Stop;
@@ -1023,6 +1203,7 @@ end;
 procedure TOceanScene.UpdateSpawning;
 var
   LateNight, Tonight: Boolean;
+  K: Integer;
 begin
   if FNow >= FMoonCheckAt then
   begin
@@ -1035,7 +1216,7 @@ begin
   Tonight := ((FFromFull >= -1) and (FFromFull <= 3)) or FForceSpawn;
   if Tonight and LateNight and (FDay < 0.2) and (not Off('spawn')) and (FNow >= FSpawnNext) then
   begin
-    ReleaseSpawn;
+    for K := 0 to FNearN - 1 do ReleaseSpawn(K);
     FSpawnNext := FNow + Rnd(4, 9) * 1000;
   end;
 end;
@@ -1150,17 +1331,29 @@ begin
   FClockMoveAt := FNow + 150000;
 end;
 
-{ corners: 0 top left, 1 top right, 2 bottom left, 3 bottom right (inside the part of the scene that is visible) }
+{ corners: 0 top left, 1 top right, 2 bottom left, 3 bottom right of the clock's area (the visible part of the
+  reef, or the main screen when the reef spans several) }
 procedure TOceanScene.PlaceClock(I: Integer);
 var
   K: Integer;
   Right: Boolean;
-  W: Single;
+  W, X0, Y0, X1, Y1: Single;
 begin
   FClockIdx := I;
+  X0 := FVX0;
+  Y0 := FVY0;
+  X1 := FVX1;
+  Y1 := FVY1;
+  if FHasClockArea then
+  begin
+    X0 := MaxF(X0, (FClockArea.Left - FView.E) / FViewScale);
+    Y0 := MaxF(Y0, (FClockArea.Top - FView.F) / FViewScale);
+    X1 := Min(X1, (FClockArea.Right - FView.E) / FViewScale);
+    Y1 := Min(Y1, (FClockArea.Bottom - FView.F) / FViewScale);
+  end;
   Right := Odd(I);
-  if Right then FClockGrp.Tx := FVX1 - 80 else FClockGrp.Tx := FVX0 + 80;
-  if I < 2 then FClockGrp.Ty := FVY0 + 50 else FClockGrp.Ty := FVY1 - 220;
+  if Right then FClockGrp.Tx := X1 - 80 else FClockGrp.Tx := X0 + 80;
+  if I < 2 then FClockGrp.Ty := Y0 + 50 else FClockGrp.Ty := Y1 - 220;
   for K := 0 to 3 do
     with FLabels[K] do
     begin
@@ -1304,31 +1497,33 @@ begin
     FFishNext := FNow + 30000;
     Exit;
   end;
-  Hx := Rnd(450, 1400);
+  Hx := Rnd(450, FW - 520);
   Hy := Rnd(380, 600);
   FHookPos := V(Hx, Hy);
   FBait.Visible := True;
   FHookGroup.Pos(Hx, -260);
   FHookGroup.Visible := True;
   MoveHook([0, 1], [V(Hx, -260), V(Hx, Hy)], 6, eOutQuad);
+  // the thief comes from the nearer edge, so on a wide reef the wait is not long
   Duration := Rnd(15, 19);
   Inc(FUid);
   C := Default(TCfg);
   C.Kind := Thieves[Random(Length(Thieves))];
   C.Uid := FUid;
   C.Depth := 0.74;
-  C.Dir := IfThen(Random < 0.5, -1, 1);
+  C.Dir := IfThen(Hx > FW / 2, -1, 1);
   C.Amp := AmpNear;
+  C.WorldW := FW;
   C.Mode := mSteal;
   C.HookX := Hx + 24 * 0.8;
   C.HookY := Hy + 90 * 0.8;
-  C.Duration := Duration;
+  C.Duration := Duration * MaxF(1, FW / 1920 / 2);
   C.Delay := 7;
   C.X := Hx;
   C.Y := Hy;
   FThief.Spawn(C);
   // the fish reaches the bait at 68% of its swim
-  FBiteAt := FNow + (7 + Duration * 0.68) * 1000;
+  FBiteAt := FNow + (7 + C.Duration * 0.68) * 1000;
   FFishState := 'fishing';
 end;
 
@@ -1396,6 +1591,8 @@ var
   I: Integer;
   Sl: TSlot;
 begin
+  // a wider reef holds more fish
+  Count := Max(Count, Round(Count * FW / 1920));
   // each slot gets its own slice of the depth range, so nearer slots draw on top
   for I := 0 to Count - 1 do
   begin
@@ -1411,7 +1608,8 @@ end;
 procedure TOceanScene.BuildSlots;
 var
   Sl: TSlot;
-  I: Integer;
+  I, K: Integer;
+  X: Single;
   Tw: TTwin;
 
   function First(S: TSlot; Seconds: Single): TSlot;
@@ -1429,6 +1627,26 @@ var
     FTwins.Add(Kind, Tw);
   end;
 
+  procedure Jelly(DMin, DMax, GapMin, GapMax: Single; NightOnly: Boolean);
+  begin
+    Sl := NewSlot(lJelly, AmpJelly, ['jelly'], DMin, DMax, 0, 0, GapMin, GapMax);
+    Sl.Mode := mRise;
+    Sl.NightOnly := NightOnly;
+    if NightOnly then Sl.Dens := 1;
+    AddSlot(Sl);
+  end;
+
+  procedure Resident(const Kind: string; Mode: TMode; Depth, HomeX, HomeY, Range, Period: Single);
+  begin
+    Sl := NewSlot(lNear, AmpNear, [Kind], Depth, Depth, 0, 0, 0, 0);
+    Sl.Mode := Mode;
+    Sl.Home := V(HomeX, HomeY);
+    Sl.HasRange := True;
+    Sl.Range := Range;
+    Sl.Period := Period;
+    AddSlot(Sl);
+  end;
+
 begin
   // rare distant whale, behind the far reef
   AddSlot(First(NewSlot(lFarBack, AmpFar, ['whale'], 0.08, 0.14, 220, 420, 150, 260), 12));
@@ -1437,22 +1655,13 @@ begin
     ['shark', 'school', 'turtle', 'manta', 'shark'], 0.06, 0.32, 110, 680);
 
   // jellyfish: more of them at night
-  Sl := NewSlot(lJelly, AmpJelly, ['jelly'], 0.2, 0.3, 0, 0, 10, 40);
-  Sl.Mode := mRise;
-  AddSlot(Sl);
-  Sl := NewSlot(lJelly, AmpJelly, ['jelly'], 0.4, 0.5, 0, 0, 20, 60);
-  Sl.Mode := mRise;
-  AddSlot(Sl);
-  Sl := NewSlot(lJelly, AmpJelly, ['jelly'], 0.3, 0.45, 0, 0, 5, 25);
-  Sl.Mode := mRise;
-  Sl.NightOnly := True;
-  Sl.Dens := 1;
-  AddSlot(Sl);
-  Sl := NewSlot(lJelly, AmpJelly, ['jelly'], 0.5, 0.6, 0, 0, 5, 25);
-  Sl.Mode := mRise;
-  Sl.NightOnly := True;
-  Sl.Dens := 1;
-  AddSlot(Sl);
+  for K := 1 to FWide do
+  begin
+    Jelly(0.2, 0.3, 10, 40, False);
+    Jelly(0.4, 0.5, 20, 60, False);
+    Jelly(0.3, 0.45, 5, 25, True);
+    Jelly(0.5, 0.6, 5, 25, True);
+  end;
 
   // a pod of dolphins racing past near the surface (daytime only)
   Sl := First(NewSlot(lMid, AmpMid, ['dolphin'], 0.5, 0.64, 150, 320, 90, 200), 25);
@@ -1465,24 +1674,16 @@ begin
   AddLayer(lNear, AmpNear, 3, ['tang', 'ytang', 'angel', 'school', 'tang', 'ytang', 'angel', 'lionfish', 'octopus'],
     ['octopus', 'lionfish', 'tang', 'lionfish'], 0.74, 0.92, 110, 760);
 
-  // seahorses near the corals: they drift slowly around their home in a loop
+  // seahorses near the corals of every section: they drift slowly around their home in a loop
   // (never turning: a flipped seahorse looks wrong)
-  Sl := NewSlot(lNear, AmpNear, ['seahorse'], 0.8, 0.8, 0, 0, 0, 0);
-  Sl.Mode := mBob;
-  Sl.HasHome := True;
-  Sl.Home := V(1790, 690);
-  Sl.HasRange := True;
-  Sl.Range := 55;
-  Sl.Period := 36;
-  AddSlot(Sl);
-  Sl := NewSlot(lNear, AmpNear, ['seahorse'], 0.75, 0.75, 0, 0, 0, 0);
-  Sl.Mode := mBob;
-  Sl.HasHome := True;
-  Sl.Home := V(330, 735);
-  Sl.HasRange := True;
-  Sl.Range := 70;
-  Sl.Period := 42;
-  AddSlot(Sl);
+  for K := 0 to FNearN - 1 do
+  begin
+    // one by the rock, one in the staghorn coral
+    X := SecX(K, NearPeriod, 1790 + Layout(K).Rock);
+    if X < FW + 100 then Resident('seahorse', mBob, 0.8, X, 690, 55, 36);
+    if Layout(K).Alt then X := SecX(K, NearPeriod, 1520) else X := SecX(K, NearPeriod, 330);
+    if X < FW + 100 then Resident('seahorse', mBob, 0.75, X, 735, 70, 42);
+  end;
 
   // glowing twins, drawn above the night shade: the diver's torch, the submarine's headlight, the anglerfish's lure
   Twin('diver', 'diverlight', FFarLight);
@@ -1502,20 +1703,17 @@ begin
   Sl.NightOnly := True;
   AddSlot(Sl);
 
-  // clownfish pair that lives at the anemone
-  for I := 0 to 1 do
-  begin
-    Sl := NewSlot(lNear, AmpNear, ['clown'], 0.62 + I * 0.05, 0.62 + I * 0.05, 0, 0, 0, 0);
-    Sl.Mode := mHover;
-    Sl.HasHome := True;
-    Sl.Home := V(890 - I * 40, 705 - I * 75);
-    Sl.HasRange := True;
-    Sl.Range := 110 + I * 60;
-    AddSlot(Sl);
-  end;
+  // a clownfish pair lives at every anemone
+  for K := 0 to FNearN - 1 do
+    for I := 0 to 1 do
+    begin
+      X := SecX(K, NearPeriod, 890 - I * 40 + Layout(K).Anemone);
+      if X < FW + 100 then Resident('clown', mHover, 0.62 + I * 0.05, X, 705 - I * 75, 110 + I * 60, 0);
+    end;
 
-  // crabs and a sea star crossing the sand in front
-  AddSlot(NewSlot(lNear, AmpNear, ['crab', 'crab', 'star'], 0.85, 0.9, 985, 1030, 15, 45));
+  // crabs and sea stars crossing the sand in front
+  for K := 1 to FWide do
+    AddSlot(NewSlot(lNear, AmpNear, ['crab', 'crab', 'star'], 0.85, 0.9, 985, 1030, 15, 45));
 
   // rare big close-up pass right in front of the camera
   FCloseSlot := FSlots.Count;
@@ -1596,8 +1794,9 @@ begin
     C.Depth := Rnd(Sl.DMin, Sl.DMax);
     C.Dir := Dir;
     C.Amp := Sl.Amp;
+    C.WorldW := FW;
     C.Y := Y + N * Rnd(-55, 55);
-    C.X := Rnd(150, 1770);
+    C.X := Rnd(150, FW - 150);
     C.Mode := Sl.Mode;
     C.Initial := Initial;
     C.Delay := N * Rnd(0.4, 0.9);
@@ -1619,7 +1818,7 @@ begin
       C.Dy := Rnd(-90, 90);
       C.Wave := Rnd(600, 1000);
       C.Ph := Rnd(0, 6.28);
-      C.Sx0 := Rnd(100, 1700);
+      C.Sx0 := Rnd(100, FW - 220);
       if FDay < 0.6 then
       begin
         Inc(FUid);

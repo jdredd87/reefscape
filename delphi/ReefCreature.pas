@@ -16,6 +16,7 @@ type
     Uid, Dir: Integer;               // Dir: 1 = swimming right, -1 = left
     Depth: Single;                   // 0 far .. 1 near
     Amp: Single;                     // the layer's parallax sway
+    WorldW: Single;                  // width of the reef in design units (1920 on a 16:9 screen)
     X, Y, Delay, Range, Period, YMin, YMax: Single;
     Mode: TMode;
     Initial, Night, HasRange, Fixed, Turned: Boolean;
@@ -137,11 +138,11 @@ begin
   Spec := FSpecs[Cfg.Kind];
   // only from on screen (or just at its edge): a fish waiting off screen must not race back in
   X := Root.Tx + Spec.Cx;
-  if (X < -60) or (X > 1980) then Exit(False);
+  if (X < -60) or (X > Cfg.WorldW + 60) then Exit(False);
   if Spec.Puff > 0 then
   begin
     // a pufferfish only puffs up well inside the screen, where the whole show can be seen
-    if (X < 260) or (X > 1660) then Exit(False);
+    if (X < 260) or (X > Cfg.WorldW - 260) then Exit(False);
     PuffUp(Spec);
     Exit(True);
   end;
@@ -167,6 +168,7 @@ var
   GR, GL: TNode;
 begin
   C := ACfg;
+  if C.WorldW < 1920 then C.WorldW := 1920;
   ClearAll;
   Spec := FSpecs[C.Kind];
   Persp := 0.22 + 0.78 * C.Depth;
@@ -347,7 +349,7 @@ var
 begin
   HalfExt := MaxF(Spec.MaxX - Spec.Cx, Spec.Cx - Spec.MinX) * S;
   LeftX := -Cfg.Amp - 40 - Spec.Cx - HalfExt;
-  RightX := 1920 + Cfg.Amp + 40 - Spec.Cx + HalfExt;
+  RightX := Cfg.WorldW + Cfg.Amp + 40 - Spec.Cx + HalfExt;
   if ADir = 1 then
   begin
     Sx := LeftX;
@@ -360,7 +362,7 @@ begin
   end;
   if Cfg.Initial then
   begin
-    Sx := Rnd(100, 1700) - Spec.Cx;
+    Sx := Rnd(100, Cfg.WorldW - 220) - Spec.Cx;
     if Cfg.Fixed then Sx := Cfg.Sx0 - Spec.Cx;
   end;
 
@@ -508,7 +510,7 @@ begin
   Hx := Cfg.HookX - Spec.Cx - ADir * (Spec.MaxX - 12 - Spec.Cx) * S;
   Hy := Cfg.HookY - Spec.Cy;
   LeftX := -Cfg.Amp - 40 - Spec.Cx - HalfExt;
-  RightX := 1920 + Cfg.Amp + 40 - Spec.Cx + HalfExt;
+  RightX := Cfg.WorldW + Cfg.Amp + 40 - Spec.Cx + HalfExt;
   if ADir = 1 then
   begin
     Sx := LeftX;
@@ -542,7 +544,7 @@ begin
   X0 := Cfg.StartPos.X - Spec.Cx;
   Y0 := Cfg.StartPos.Y - Spec.Cy;
   if ADir = 1 then
-    Ex := 1920 + Cfg.Amp + 40 - Spec.Cx + HalfExt
+    Ex := Cfg.WorldW + Cfg.Amp + 40 - Spec.Cx + HalfExt
   else
     Ex := -Cfg.Amp - 40 - Spec.Cx - HalfExt;
   Dy := Cfg.FleeY * Rnd(150, 260) * Persp;
@@ -613,7 +615,7 @@ begin
   Ey := -130 * S - Spec.Cy - 40;
   // a current carries it sideways across the screen (toward the side with more room) as it rises
   Drift := Rnd(160, 340);
-  if X0 + Spec.Cx > 960 then Drift := -Drift;
+  if X0 + Spec.Cx > Cfg.WorldW / 2 then Drift := -Drift;
   Ph := Rnd(0, 6.28);
   Dist := Y0 - Ey;
   if Dist < 100 then Dist := 100;

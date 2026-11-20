@@ -10,7 +10,7 @@ unit SaverMain;
   For testing there is also:
     /w            run in an ordinary window (Esc closes it)
   and name=value options: hour=22 show=puffer shark=1 spawn=1 season=xmas diver=1 fish=1 shrimp=1
-  light=night clock=both count=lots off=shark,eel screens=each seed=1 size=1280x720
+  light=night clock=both count=lots off=shark,eel screens=span|same|each|main seed=1 size=1280x720
   ff=20 (skip 20 seconds ahead)  quit=5 (close after 5 seconds; keys and the mouse are ignored)
   shot=file.png (save a picture of the first frames and quit)  log=file.txt (renderer and frame times).
 
@@ -44,6 +44,7 @@ type
     HasMirrors: Boolean;
     CopyTex: GLuint;          // views with mirrors: the finished frame as a texture
     CopyW, CopyH: Integer;
+    ClockArea: TRect;         // where the clock may sit, in the view's own pixels (empty = anywhere)
     destructor Destroy; override;
   end;
 
@@ -201,7 +202,11 @@ begin
       if V.Role = roMirror then V.Role := roScene;
     end;
   for V in FViews do
-    if V.Role = roScene then V.Scene := TOceanScene.Create(Settings, V.R.Width, V.R.Height);
+    if V.Role = roScene then
+    begin
+      V.Scene := TOceanScene.Create(Settings, V.R.Width, V.R.Height);
+      if not V.ClockArea.IsEmpty then V.Scene.SetClockArea(V.ClockArea);
+    end;
 end;
 
 { Keep the view just drawn as a texture, for the screens that show the same reef }
@@ -436,9 +441,12 @@ begin
   if T1 - T < 0.004 then Sleep(8);
 end;
 
-{ One view per screen. By default the same reef is shown on every screen: it is drawn once (on the biggest
-  screen) and copied, so several screens cost little more than one. A screen of a different shape gets a
-  reef of its own. }
+{ The views of the full-screen window, by the "more than one screen" setting:
+    span  one wide reef across the whole desktop (the default): fish swim from one screen to the next
+    same  the same reef on every screen: drawn once (on the biggest screen) and copied; a screen of a
+          different shape gets a reef of its own
+    each  a different reef on each screen
+    main  the main screen only }
 procedure AddScreenViews(Form: TSaverForm; const Desktop: TRect);
 var
   I, Best: Integer;
@@ -452,6 +460,17 @@ var
   end;
 
 begin
+  if (Settings.Screens <> 'same') and (Settings.Screens <> 'each') and (Settings.Screens <> 'main') then
+  begin
+    V := TView.Create;
+    V.R := Rect(0, 0, Desktop.Width, Desktop.Height);
+    V.Role := roScene;
+    // the clock keeps to the main screen
+    V.ClockArea := Screen.PrimaryMonitor.BoundsRect;
+    V.ClockArea.Offset(-Desktop.Left, -Desktop.Top);
+    Form.FViews.Add(V);
+    Exit;
+  end;
   Best := 0;
   for I := 1 to Screen.MonitorCount - 1 do
     if (Area(I) > Area(Best)) or ((Area(I) = Area(Best)) and Screen.Monitors[I].Primary) then Best := I;

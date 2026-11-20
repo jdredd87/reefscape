@@ -48,13 +48,18 @@ bin\ReefTest.exe /w hour=22 show=puffer
 ```
 
 `/w` = ordinary window (Esc closes it), `/s` = full screen, `/c` = settings.
-Options: `hour=` `light=` `clock=` `count=` `off=a,b` `screens=same|each|main` `show=puffer|sub|angler`
+Options: `hour=` `light=` `clock=` `count=` `off=a,b` `screens=span|same|each|main` `show=puffer|sub|angler`
 `shark=1` `spawn=1` `season=xmas` `diver=1` `fish=1` `shrimp=1` `seed=` `size=1280x720`
 `ff=20` (skip ahead 20 seconds) `quit=5` (close after 5 seconds) `shot=file.png` `log=file.txt`.
 
 ## Differences from the Roku version
 
-- Scales to any screen size; screens that are not 16:9 crop a little rather than stretch.
-- Several screens: the same reef on each (drawn once and copied), a different reef on each, or the main screen only.
+- The reef has no fixed width. It is as wide as the screen's shape asks for: an ultrawide monitor, or several
+  monitors side by side, show one longer reef and the animals swim its whole length. The backgrounds and the
+  fixed residents repeat in sections (`Tile`, `SecGroup`, `Layout` in `ReefScene.pas`); every other section is
+  mirrored and laid out differently so the joins don't show.
+- Several screens: one wide reef across all of them (default), the same reef on each (drawn once and copied),
+  a different reef on each, or the main screen only. The screensaver is a single window over the whole desktop.
+- A screen less wide than 16:9 crops a little rather than stretching.
 - No quality tiers: a PC draws everything.
 - Motion is computed every frame instead of from key frames, so loops are a little smoother.

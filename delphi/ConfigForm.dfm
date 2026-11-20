@@ -4,7 +4,7 @@ object frmConfig: TfrmConfig
   BorderIcons = [biSystemMenu]
   BorderStyle = bsDialog
   Caption = 'Reefscape settings'
-  ClientHeight = 596
+  ClientHeight = 620
   ClientWidth = 560
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -44,7 +44,7 @@ object frmConfig: TfrmConfig
   end
   object lblCredit: TLabel
     Left = 16
-    Top = 567
+    Top = 591
     Width = 200
     Height = 15
     Caption = 'Created by Steven Chesser && Claude'
@@ -83,7 +83,7 @@ object frmConfig: TfrmConfig
     Left = 16
     Top = 464
     Width = 264
-    Height = 92
+    Height = 116
     Caption = 'More than one screen'
     TabOrder = 8
   end
@@ -115,7 +115,7 @@ object frmConfig: TfrmConfig
   end
   object btnOK: TButton
     Left = 384
-    Top = 562
+    Top = 586
     Width = 75
     Height = 25
     Caption = 'OK'
@@ -125,7 +125,7 @@ object frmConfig: TfrmConfig
   end
   object btnCancel: TButton
     Left = 469
-    Top = 562
+    Top = 586
     Width = 75
     Height = 25
     Cancel = True

@@ -18,7 +18,7 @@ type
     Clock: string;      // off | time | date | both
     Count: string;      // few | some | lots
     Off: string;        // comma-separated animal keys that are switched off
-    Screens: string;    // with several screens: same | each | main
+    Screens: string;    // with several screens: span | same | each | main
     // test options (command line only, never saved)
     StartHour: Single;  // < 0 = follow the clock
     Show: string;       // send this rare visitor now: puffer | sub | angler
@@ -51,7 +51,8 @@ const
     (Key: 'lots'; Caption: 'Lots'));
 
   // what to do when the PC has more than one screen
-  ScreenModes: array [0 .. 2] of TChoice = (
+  ScreenModes: array [0 .. 3] of TChoice = (
+    (Key: 'span'; Caption: 'One wide reef across all screens'),
     (Key: 'same'; Caption: 'The same reef on every screen'),
     (Key: 'each'; Caption: 'A different reef on each screen'),
     (Key: 'main'; Caption: 'Main screen only'));
@@ -111,7 +112,7 @@ begin
   Light := 'auto';
   Clock := 'off';
   Count := 'few';
-  Screens := 'same';
+  Screens := 'span';
   StartHour := -1;
   Reg := TRegistry.Create(KEY_READ);
   try
