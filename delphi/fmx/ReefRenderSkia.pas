@@ -29,7 +29,7 @@ type
     destructor Destroy; override;
     function LoadImage(const Name: string): TTexture; override;
     function MakeText(const Text: string; PixelHeight: Integer; Bold: Boolean): TTexture; override;
-    procedure BeginView(const ViewRect: TRect; WindowH: Integer; Color: Cardinal); override;
+    procedure BeginView(const ViewRect: TRect; WindowH: Integer; Color: Cardinal; Clear: Boolean); override;
     procedure EndView; override;
     procedure DrawImage(Tex: TTexture; const M: TMat; W, H, R, G, B, A: Single); override;
     procedure FillRect(const M: TMat; W, H, R, G, B, A: Single); override;
@@ -149,12 +149,12 @@ begin
   end;
 end;
 
-procedure TSkiaRenderer.BeginView(const ViewRect: TRect; WindowH: Integer; Color: Cardinal);
+procedure TSkiaRenderer.BeginView(const ViewRect: TRect; WindowH: Integer; Color: Cardinal; Clear: Boolean);
 begin
   FCanvas.Save;
   FCanvas.ClipRect(TRectF.Create(ViewRect));
   FCanvas.Translate(ViewRect.Left, ViewRect.Top);
-  FCanvas.Clear(TAlphaColor($FF000000 or Color));
+  if Clear then FCanvas.Clear(TAlphaColor($FF000000 or Color));
   FClipOn := False;
 end;
 

@@ -11,6 +11,8 @@ object frmMain: TfrmMain
   FormFactor.Devices = [Desktop]
   OnCreate = FormCreate
   OnDestroy = FormDestroy
+  OnShow = FormShow
+  OnDeactivate = FormDeactivate
   OnKeyDown = FormKeyDown
   DesignerMasterStyle = 0
 end

@@ -73,8 +73,10 @@ Options: `hour=` `light=` `clock=` `count=` `off=a,b` `screens=span|same|each|ma
   `Redist` folder; running from the IDE finds Delphi's own copy).
 - Keys: F or F11 = full screen, S = settings, Esc = leave full screen or close. Double-click = full screen;
   right-click (or a long press on a touch screen) = settings.
-- It takes the same test options as the screensaver (`hour=`, `show=`, `ff=`, `shot=`, `quit=` ...), plus
-  `full=1` and `settings=1`. No `/w` is needed: it always runs in a window.
+- It takes the same command line as the screensaver: `/s` (full screen over every screen, with the same
+  `screens=` modes, ended by a key or the mouse), `/w` (window), `/c` (settings only), `/p <hwnd>` (preview,
+  Windows only) and the same `name=value` options, plus `full=1` and `settings=1`. One difference: with no
+  switch it opens the reef in a window, where the screensaver opens its settings.
 - Other platforms: add them under Target Platforms in the IDE. On macOS, Android, iOS and Linux it is an app
   that shows the reef; it is not installed as the system's screensaver. Only the Windows build has been run.
 - On Windows it shares its settings with the screensaver (the same registry key); elsewhere they are kept in
@@ -88,6 +90,7 @@ Options: `hour=` `light=` `clock=` `count=` `off=a,b` `screens=span|same|each|ma
   mirrored and laid out differently so the joins don't show.
 - Several screens: one wide reef across all of them (default), the same reef on each (drawn once and copied),
   a different reef on each, or the main screen only. The screensaver is a single window over the whole desktop.
+  Whatever the mode, the date and time show on the main screen only.
 - A screen less wide than 16:9 crops a little rather than stretching.
 - No quality tiers: a PC draws everything.
 - Motion is computed every frame instead of from key frames, so loops are a little smoother.

@@ -9,7 +9,7 @@ interface
 uses
   System.SysUtils, System.Types, System.UITypes, System.Classes, System.Generics.Collections,
   FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.StdCtrls, FMX.Layouts, FMX.ListBox, FMX.Controls.Presentation,
-  ReefSettings;
+  ReefSettings, AppArgs;
 
 type
   TfrmSettings = class(TForm)
@@ -24,7 +24,13 @@ type
     procedure NoneClick(Sender: TObject);
     procedure OkClick(Sender: TObject);
     procedure CancelClick(Sender: TObject);
+  public
+    { True when the form is the whole program (started with /c): OK and Cancel then close it }
+    Standalone: Boolean;
   end;
+
+var
+  frmSettings: TfrmSettings;
 
 { shows the settings; OnSaved runs if they were changed and saved }
 procedure ShowReefSettings(const OnSaved: TProc);
@@ -131,6 +137,9 @@ var
 
 begin
   S.Load;
+  // started with /c: the form is the whole program
+  Standalone := AppMode = amConfig;
+  if Standalone then Position := TFormPosition.ScreenCenter;
   Padding.Rect := TRectF.Create(14, 10, 14, 12);
 
   Bottom := TLayout.Create(Self);
@@ -237,12 +246,12 @@ begin
       S.Off := S.Off + Animals[I].Key;
     end;
   S.Save;
-  ModalResult := mrOk;
+  if Standalone then Close else ModalResult := mrOk;
 end;
 
 procedure TfrmSettings.CancelClick(Sender: TObject);
 begin
-  ModalResult := mrCancel;
+  if Standalone then Close else ModalResult := mrCancel;
 end;
 
 end.

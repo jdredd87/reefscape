@@ -82,6 +82,9 @@ type
     Y: Single;
   end;
 
+  { what Render draws: with several screens the date and time are shown on one of them only }
+  TRenderPart = (rpAll, rpNoClock, rpClockOnly);
+
   TOceanScene = class
   private
     FSet: TReefSettings;
@@ -201,8 +204,9 @@ type
     { where the clock may sit (window pixels), e.g. the main screen when the reef spans several }
     procedure SetClockArea(const R: TRect);
     procedure Advance(Dt: Single);
-    { draws into ViewRect (window pixels, y down) of a window WindowH pixels high }
-    procedure Render(const ViewRect: TRect; WindowH: Integer);
+    { draws into ViewRect (window pixels, y down) of a window WindowH pixels high.
+      rpClockOnly draws just the date and time over what is already there. }
+    procedure Render(const ViewRect: TRect; WindowH: Integer; Part: TRenderPart = rpAll);
     { how wide the reef was built, in design units (1920 for a 16:9 window) }
     property WorldWidth: Single read FW;
   end;
@@ -1913,11 +1917,24 @@ begin
   end;
 end;
 
-procedure TOceanScene.Render(const ViewRect: TRect; WindowH: Integer);
+procedure TOceanScene.Render(const ViewRect: TRect; WindowH: Integer; Part: TRenderPart);
+var
+  WasVisible: Boolean;
 begin
-  Renderer.BeginView(ViewRect, WindowH, $0A4A78);
+  if Part = rpClockOnly then
+  begin
+    if not FClockOn then Exit;
+    Renderer.BeginView(ViewRect, WindowH, 0, False);
+    DrawTree(FClockGrp, FView);
+    Renderer.EndView;
+    Exit;
+  end;
+  WasVisible := FClockGrp.Visible;
+  if Part = rpNoClock then FClockGrp.Visible := False;
+  Renderer.BeginView(ViewRect, WindowH, $0A4A78, True);
   DrawTree(FRoot, FView);
   Renderer.EndView;
+  FClockGrp.Visible := WasVisible;
 end;
 
 end.

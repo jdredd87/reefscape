@@ -81,6 +81,7 @@
         <DCCReference Include="..\ReefSettings.pas"/>
         <DCCReference Include="..\ReefScene.pas"/>
         <DCCReference Include="ReefRenderSkia.pas"/>
+        <DCCReference Include="AppArgs.pas"/>
         <DCCReference Include="MainForm.pas">
             <Form>frmMain</Form>
             <FormType>fmx</FormType>

@@ -135,8 +135,9 @@ type
     function LoadImage(const Name: string): TTexture; virtual; abstract;
     { white text as an image, to be tinted when drawn; the caller owns it }
     function MakeText(const Text: string; PixelHeight: Integer; Bold: Boolean): TTexture; virtual; abstract;
-    { start drawing into ViewRect (window pixels, y down) of a window WindowH pixels high, cleared to Color }
-    procedure BeginView(const ViewRect: TRect; WindowH: Integer; Color: Cardinal); virtual; abstract;
+    { start drawing into ViewRect (window pixels, y down) of a window WindowH pixels high; Clear = fill it
+      with Color first (False draws over what is already there) }
+    procedure BeginView(const ViewRect: TRect; WindowH: Integer; Color: Cardinal; Clear: Boolean); virtual; abstract;
     procedure EndView; virtual; abstract;
     { an image W x H units big, placed by M (view pixels), multiplied by the colour R, G, B and opacity A }
     procedure DrawImage(Tex: TTexture; const M: TMat; W, H, R, G, B, A: Single); virtual; abstract;

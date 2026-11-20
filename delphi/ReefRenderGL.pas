@@ -32,7 +32,7 @@ type
     destructor Destroy; override;
     function LoadImage(const Name: string): TTexture; override;
     function MakeText(const Text: string; PixelHeight: Integer; Bold: Boolean): TTexture; override;
-    procedure BeginView(const ViewRect: TRect; WindowH: Integer; Color: Cardinal); override;
+    procedure BeginView(const ViewRect: TRect; WindowH: Integer; Color: Cardinal; Clear: Boolean); override;
     procedure EndView; override;
     procedure DrawImage(Tex: TTexture; const M: TMat; W, H, R, G, B, A: Single); override;
     procedure FillRect(const M: TMat; W, H, R, G, B, A: Single); override;
@@ -201,7 +201,7 @@ begin
   end;
 end;
 
-procedure TGLRenderer.BeginView(const ViewRect: TRect; WindowH: Integer; Color: Cardinal);
+procedure TGLRenderer.BeginView(const ViewRect: TRect; WindowH: Integer; Color: Cardinal; Clear: Boolean);
 begin
   // OpenGL counts window rows from the bottom
   FOX := ViewRect.Left;
@@ -213,11 +213,14 @@ begin
   glOrtho(0, ViewRect.Width, FViewH, 0, -1, 1);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity;
-  // clear this view only
-  glEnable(GL_SCISSOR_TEST);
-  glScissor(FOX, FOY, ViewRect.Width, FViewH);
-  glClearColor(((Color shr 16) and $FF) / 255, ((Color shr 8) and $FF) / 255, (Color and $FF) / 255, 1);
-  glClear(GL_COLOR_BUFFER_BIT);
+  if Clear then
+  begin
+    // this view only
+    glEnable(GL_SCISSOR_TEST);
+    glScissor(FOX, FOY, ViewRect.Width, FViewH);
+    glClearColor(((Color shr 16) and $FF) / 255, ((Color shr 8) and $FF) / 255, (Color and $FF) / 255, 1);
+    glClear(GL_COLOR_BUFFER_BIT);
+  end;
   glDisable(GL_SCISSOR_TEST);
   glDisable(GL_TEXTURE_2D);
   FTexOn := False;

@@ -42,6 +42,7 @@ type
     Scene: TOceanScene;
     Master: TView;            // mirrors: the view whose picture is copied
     HasMirrors: Boolean;
+    HideClock: Boolean;       // with several screens only the main one shows the date and time
     CopyTex: GLuint;          // views with mirrors: the finished frame as a texture
     CopyW, CopyH: Integer;
     ClockArea: TRect;         // where the clock may sit, in the view's own pixels (empty = anywhere)
@@ -286,11 +287,29 @@ begin
     begin
       V.Scene.SetView(V.R.Width, V.R.Height);
       if Advance then V.Scene.Advance(Dt);
-      V.Scene.Render(V.R, H);
-      if V.HasMirrors then CopyFrame(V, H - V.R.Bottom);
+      if V.HasMirrors then
+      begin
+        // the copies must not carry the clock: it is drawn after the picture is taken
+        V.Scene.Render(V.R, H, rpNoClock);
+        CopyFrame(V, H - V.R.Bottom);
+        if not V.HideClock then V.Scene.Render(V.R, H, rpClockOnly);
+      end
+      else if V.HideClock then
+        V.Scene.Render(V.R, H, rpNoClock)
+      else
+        V.Scene.Render(V.R, H);
     end;
   for V in FViews do
-    if V.Role = roMirror then DrawMirror(V, H - V.R.Bottom);
+    if V.Role = roMirror then
+    begin
+      DrawMirror(V, H - V.R.Bottom);
+      if (not V.HideClock) and (V.Master <> nil) then
+      begin
+        // the main screen shows a copy: the clock is drawn on it from the reef it copies
+        V.Master.Scene.SetView(V.R.Width, V.R.Height);
+        V.Master.Scene.Render(V.R, H, rpClockOnly);
+      end;
+    end;
 end;
 
 procedure TSaverForm.Frame(Dt: Single);
@@ -488,6 +507,7 @@ begin
     V := TView.Create;
     V.R := R;
     V.R.Offset(-Desktop.Left, -Desktop.Top);
+    if I < 0 then V.HideClock := not Screen.Monitors[Best].Primary else V.HideClock := not Screen.Monitors[I].Primary;
     if I < 0 then
     begin
       V.Role := roScene;
