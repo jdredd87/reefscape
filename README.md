@@ -100,3 +100,10 @@ so every image goes through `setImg`, which gives it its size there, and XML pos
 Every sideload leaves the previous install's textures in memory until the Roku restarts, so restart a test
 Roku after many installs before judging texture memory (`.\tools\roku.ps1 mem`).
 To install on another Roku: `.\build.ps1 -RokuIP <ip> -Password <pw>`; the tools take `-RokuIP` too.
+## Windows screensaver (Delphi)
+The `delphi\` folder holds a Windows screensaver version built with Delphi 13: the same artwork and the same
+behaviour, ported from the BrightScript in `components\`. Open `delphi\Reefscape.dproj` in the IDE or run
+`delphi\build.ps1`; the result is `delphi\bin\Reefscape.scr`. See `delphi\README.md`.
+A change to the reef's behaviour should go into both versions: `Specs.brs` ↔ `ReefSpecs.pas`,
+`Creature.brs` ↔ `ReefCreature.pas`, `OceanScene.brs` ↔ `ReefScene.pas`. The Roku package is not affected by
+this folder (the Roku build only packs `manifest`, `source`, `components` and `images`).

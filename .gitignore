@@ -13,3 +13,15 @@ node_modules/
 .vscode/
 Thumbs.db
 desktop.ini
+
+# Delphi (Windows screensaver) build output
+delphi/bin/
+delphi/dcu/
+delphi/out/
+delphi/*.res
+delphi/*.local
+delphi/*.identcache
+delphi/*.dsk
+delphi/*.stat
+delphi/__history/
+delphi/__recovery/
