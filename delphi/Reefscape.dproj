@@ -73,6 +73,7 @@
             <Form>ReefRes.res</Form>
         </RcCompile>
         <DCCReference Include="ReefEngine.pas"/>
+        <DCCReference Include="ReefRenderGL.pas"/>
         <DCCReference Include="ReefSpecs.pas"/>
         <DCCReference Include="ReefCreature.pas"/>
         <DCCReference Include="ReefSettings.pas"/>

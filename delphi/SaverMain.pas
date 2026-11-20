@@ -26,7 +26,7 @@ implementation
 uses
   Winapi.Windows, Winapi.Messages, Winapi.OpenGL, Winapi.ActiveX, System.SysUtils, System.Classes, System.Math,
   System.Diagnostics, System.Generics.Collections, Vcl.Forms, Vcl.Controls, Vcl.Graphics, Vcl.Imaging.pngimage,
-  ReefEngine, ReefSettings, ReefScene, ConfigForm;
+  ReefEngine, ReefRenderGL, ReefSettings, ReefScene, ConfigForm;
 
 type
   TRunMode = (rmSaver, rmPreview, rmWindow, rmConfig);
@@ -286,7 +286,7 @@ begin
     begin
       V.Scene.SetView(V.R.Width, V.R.Height);
       if Advance then V.Scene.Advance(Dt);
-      V.Scene.Render(V.R.Left, H - V.R.Bottom);
+      V.Scene.Render(V.R, H);
       if V.HasMirrors then CopyFrame(V, H - V.R.Bottom);
     end;
   for V in FViews do

@@ -14,7 +14,7 @@ unit ReefScene;
 interface
 
 uses
-  Winapi.Windows, Winapi.OpenGL, System.SysUtils, System.Classes, System.Math, System.StrUtils, System.DateUtils,
+  System.Types, System.SysUtils, System.Classes, System.Math, System.StrUtils, System.DateUtils,
   System.Generics.Collections, ReefEngine, ReefSpecs, ReefCreature, ReefSettings;
 
 type
@@ -192,7 +192,8 @@ type
     procedure ApplyTestOptions;
     procedure Tick;
   public
-    { needs a current OpenGL context: images are loaded as the scene is built.
+    { needs the renderer ready (in the VCL version: a current OpenGL context), because images are loaded as
+      the scene is built.
       The window's shape at this moment decides how wide the reef is. }
     constructor Create(const ASettings: TReefSettings; WinW, WinH: Integer);
     destructor Destroy; override;
@@ -200,8 +201,10 @@ type
     { where the clock may sit (window pixels), e.g. the main screen when the reef spans several }
     procedure SetClockArea(const R: TRect);
     procedure Advance(Dt: Single);
-    { draws into the part of the window whose bottom-left corner is at (OriginX, OriginY) }
-    procedure Render(OriginX: Integer = 0; OriginY: Integer = 0);
+    { draws into ViewRect (window pixels, y down) of a window WindowH pixels high }
+    procedure Render(const ViewRect: TRect; WindowH: Integer);
+    { how wide the reef was built, in design units (1920 for a 16:9 window) }
+    property WorldWidth: Single read FW;
   end;
 
 implementation
@@ -1372,7 +1375,7 @@ begin
     Node.Tex := nil;
     FreeAndNil(Tex);
     // drawn at the screen's own resolution so the text stays sharp on any display
-    Tex := Textures.MakeText(Text, 'Segoe UI', Max(8, Round(Size * FViewScale)), Bold);
+    Tex := Renderer.MakeText(Text, Max(8, Round(Size * FViewScale)), Bold);
     Node.Tex := Tex;
     Node.W := Tex.W / FViewScale;
     Node.H := Tex.H / FViewScale;
@@ -1910,20 +1913,11 @@ begin
   end;
 end;
 
-procedure TOceanScene.Render(OriginX, OriginY: Integer);
+procedure TOceanScene.Render(const ViewRect: TRect; WindowH: Integer);
 begin
-  glViewport(OriginX, OriginY, FWinW, FWinH);
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity;
-  glOrtho(0, FWinW, FWinH, 0, -1, 1);
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity;
-  // clear this view only
-  glEnable(GL_SCISSOR_TEST);
-  glScissor(OriginX, OriginY, FWinW, FWinH);
-  glClearColor($0A / 255, $4A / 255, $78 / 255, 1);
-  glClear(GL_COLOR_BUFFER_BIT);
-  DrawTree(FRoot, FView, FWinH, OriginX, OriginY);
+  Renderer.BeginView(ViewRect, WindowH, $0A4A78);
+  DrawTree(FRoot, FView);
+  Renderer.EndView;
 end;
 
 end.

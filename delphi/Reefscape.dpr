@@ -11,6 +11,7 @@ program Reefscape;
 uses
   Vcl.Forms,
   ReefEngine in 'ReefEngine.pas',
+  ReefRenderGL in 'ReefRenderGL.pas',
   ReefSpecs in 'ReefSpecs.pas',
   ReefCreature in 'ReefCreature.pas',
   ReefSettings in 'ReefSettings.pas',

@@ -1,6 +1,6 @@
 unit ReefSettings;
 
-{ The screensaver's settings, kept in the registry under HKEY_CURRENT_USER\Software\Reefscape,
+{ The settings, kept on Windows in the registry under HKEY_CURRENT_USER\Software\Reefscape\Settings,
   plus test options that can be given on the command line (name=value). }
 
 interface
@@ -88,65 +88,60 @@ const
 implementation
 
 uses
-  Winapi.Windows, System.Win.Registry;
-
-const
-  RegKey = 'Software\Reefscape';
+  {$IFDEF MSWINDOWS}Winapi.Windows, System.Win.Registry,{$ENDIF}
+  System.IniFiles, System.IOUtils;
 
 function TReefSettings.IsOff(const Key: string): Boolean;
 begin
   Result := Pos(',' + Key + ',', ',' + Off + ',') > 0;
 end;
 
+{ Windows keeps the settings in the registry (shared by the screensaver and the FMX app);
+  other systems in Reefscape.ini in the user's home folder }
+function OpenStore(ReadOnly: Boolean): TCustomIniFile;
+begin
+{$IFDEF MSWINDOWS}
+  if ReadOnly then
+    Result := TRegistryIniFile.Create('Software\Reefscape', KEY_READ)
+  else
+    Result := TRegistryIniFile.Create('Software\Reefscape');
+{$ELSE}
+  Result := TMemIniFile.Create(TPath.Combine(TPath.GetHomePath, 'Reefscape.ini'));
+{$ENDIF}
+end;
+
 procedure TReefSettings.Load;
 var
-  Reg: TRegistry;
-
-  function Read(const Name, Default: string): string;
-  begin
-    if Reg.ValueExists(Name) then Result := Reg.ReadString(Name) else Result := Default;
-  end;
-
+  Ini: TCustomIniFile;
 begin
   Self := Default(TReefSettings);
-  Light := 'auto';
-  Clock := 'off';
-  Count := 'few';
-  Screens := 'span';
   StartHour := -1;
-  Reg := TRegistry.Create(KEY_READ);
+  Ini := OpenStore(True);
   try
-    Reg.RootKey := HKEY_CURRENT_USER;
-    if Reg.OpenKeyReadOnly(RegKey) then
-    begin
-      Light := Read('Light', Light);
-      Clock := Read('Clock', Clock);
-      Count := Read('Count', Count);
-      Off := Read('Off', '');
-      Screens := Read('Screens', Screens);
-    end;
+    Light := Ini.ReadString('Settings', 'Light', 'auto');
+    Clock := Ini.ReadString('Settings', 'Clock', 'off');
+    Count := Ini.ReadString('Settings', 'Count', 'few');
+    Off := Ini.ReadString('Settings', 'Off', '');
+    Screens := Ini.ReadString('Settings', 'Screens', 'span');
   finally
-    Reg.Free;
+    Ini.Free;
   end;
 end;
 
 procedure TReefSettings.Save;
 var
-  Reg: TRegistry;
+  Ini: TCustomIniFile;
 begin
-  Reg := TRegistry.Create;
+  Ini := OpenStore(False);
   try
-    Reg.RootKey := HKEY_CURRENT_USER;
-    if Reg.OpenKey(RegKey, True) then
-    begin
-      Reg.WriteString('Light', Light);
-      Reg.WriteString('Clock', Clock);
-      Reg.WriteString('Count', Count);
-      Reg.WriteString('Off', Off);
-      Reg.WriteString('Screens', Screens);
-    end;
+    Ini.WriteString('Settings', 'Light', Light);
+    Ini.WriteString('Settings', 'Clock', Clock);
+    Ini.WriteString('Settings', 'Count', Count);
+    Ini.WriteString('Settings', 'Off', Off);
+    Ini.WriteString('Settings', 'Screens', Screens);
+    Ini.UpdateFile;
   finally
-    Reg.Free;
+    Ini.Free;
   end;
 end;
 

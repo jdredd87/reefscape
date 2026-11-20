@@ -1,19 +1,21 @@
 unit ReefEngine;
 
-{ A small scene graph and animation engine, drawn with OpenGL.
+{ A small scene graph and animation engine.
 
   It follows the model the Roku version is built on, so the reef code ports over almost line for line:
   - TNode    = a Group, Poster (image) or Rectangle with translation, rotation, scale (about a pivot),
                opacity, tint and an optional clipping rectangle. Children are drawn in order, back to front.
   - TAnim    = an animation with one or more tracks; each track moves one field of one node through
                key frames (or along a sine wave), optionally looping.
-  All coordinates are in the 1920 x 1080 design space; the view matrix scales that to the window. }
+  All coordinates are in the 1920 x 1080 design space; the view matrix scales that to the window.
+
+  The engine does not draw by itself. A renderer (TReefRenderer) loads the images and draws them:
+  ReefRenderGL.pas with OpenGL for the VCL screensaver, fmx\ReefRenderSkia.pas with Skia for the FMX app. }
 
 interface
 
 uses
-  Winapi.Windows, Winapi.OpenGL, System.SysUtils, System.Classes, System.Math,
-  System.Generics.Collections;
+  System.Types, System.SysUtils, System.Classes, System.Math, System.Generics.Collections;
 
 type
   TVec2 = record
@@ -25,12 +27,10 @@ type
     A, B, C, D, E, F: Single;
   end;
 
+  { an image as the renderer holds it; renderers use their own subclass }
   TTexture = class
   public
-    Id: GLuint;
     W, H: Integer;      // image size in pixels
-    U, V: Single;       // texture coordinates of the image's right / bottom edge
-    destructor Destroy; override;
   end;
 
   TNodeKind = (nkGroup, nkPoster, nkRect);
@@ -122,39 +122,39 @@ type
     procedure Update(Dt: Single);
   end;
 
-  TTextureStore = class
-  private
-    FMap: TObjectDictionary<string, TTexture>;
-    FReady, FNPOT: Boolean;
-    FGenMipmap: procedure(Target: GLenum); stdcall;
-    procedure Init;
-    function Upload(W, H: Integer; Pixels: Pointer; Mipmaps: Boolean): TTexture;
+  { a clipping rectangle in the view's pixels (y down) }
+  TClip = record
+    On: Boolean;
+    X0, Y0, X1, Y1: Single;
+  end;
+
+  { Loads and draws images. One global instance (Renderer) is created by the renderer unit a program uses. }
+  TReefRenderer = class abstract
   public
-    constructor Create;
-    destructor Destroy; override;
-    function Get(const Name: string): TTexture;
-    { white text as a texture (premultiplied alpha); the caller owns it }
-    function MakeText(const Text, FontName: string; PixelHeight: Integer; Bold: Boolean): TTexture;
+    { the image named Name (from ..\images\ocean, compiled in as the resource IMG_<NAME>); the renderer owns it }
+    function LoadImage(const Name: string): TTexture; virtual; abstract;
+    { white text as an image, to be tinted when drawn; the caller owns it }
+    function MakeText(const Text: string; PixelHeight: Integer; Bold: Boolean): TTexture; virtual; abstract;
+    { start drawing into ViewRect (window pixels, y down) of a window WindowH pixels high, cleared to Color }
+    procedure BeginView(const ViewRect: TRect; WindowH: Integer; Color: Cardinal); virtual; abstract;
+    procedure EndView; virtual; abstract;
+    { an image W x H units big, placed by M (view pixels), multiplied by the colour R, G, B and opacity A }
+    procedure DrawImage(Tex: TTexture; const M: TMat; W, H, R, G, B, A: Single); virtual; abstract;
+    procedure FillRect(const M: TMat; W, H, R, G, B, A: Single); virtual; abstract;
+    procedure SetClip(const Clip: TClip); virtual; abstract;
   end;
 
 function V(X, Y: Single): TVec2; inline;
 function Rnd(A, B: Single): Single;
 function MaxF(A, B: Single): Single; inline;
 function TintFor(Depth: Single; Dark: Single = 1.0): Cardinal;
-{ draws into the viewport whose bottom-left corner is at (OriginX, OriginY) in the window and that is ViewH high }
-procedure DrawTree(Root: TNode; const View: TMat; ViewH, OriginX, OriginY: Integer);
+{ draws the tree with the renderer, between its BeginView and EndView }
+procedure DrawTree(Root: TNode; const View: TMat);
 
 var
-  Textures: TTextureStore;
+  Renderer: TReefRenderer;
 
 implementation
-
-uses
-  Winapi.ActiveX, Winapi.Wincodec, System.Win.ComObj, Vcl.Graphics;
-
-const
-  GL_BGRA_EXT = $80E1;
-  GL_CLAMP_TO_EDGE = $812F;
 
 function V(X, Y: Single): TVec2;
 begin
@@ -195,14 +195,6 @@ begin
   Result.D := P.B * L.C + P.D * L.D;
   Result.E := P.A * L.E + P.C * L.F + P.E;
   Result.F := P.B * L.E + P.D * L.F + P.F;
-end;
-
-{ ---------- TTexture ---------- }
-
-destructor TTexture.Destroy;
-begin
-  if (Id <> 0) and (wglGetCurrentContext <> 0) then glDeleteTextures(1, @Id);
-  inherited;
 end;
 
 { ---------- TNode ---------- }
@@ -272,7 +264,7 @@ end;
 
 procedure TNode.SetImage(const Img: string);
 begin
-  Tex := Textures.Get(Img);
+  Tex := Renderer.LoadImage(Img);
 end;
 
 function TNode.Pos(X, Y: Single): TNode;
@@ -358,47 +350,12 @@ end;
 
 { ---------- drawing ---------- }
 
-type
-  TClip = record
-    On: Boolean;
-    X0, Y0, X1, Y1: Single;   // window pixels, y down
-  end;
-
-var
-  BoundTex: GLuint;
-  TexOn: Boolean;
-  DrawViewH, DrawOX, DrawOY: Integer;
-
-procedure ApplyClip(const C: TClip);
-var
-  X, Y, W, H: Integer;
-begin
-  if not C.On then
-  begin
-    glDisable(GL_SCISSOR_TEST);
-    Exit;
-  end;
-  X := Floor(C.X0);
-  Y := Floor(C.Y0);
-  W := Max(0, Ceil(C.X1) - X);
-  H := Max(0, Ceil(C.Y1) - Y);
-  glEnable(GL_SCISSOR_TEST);
-  glScissor(DrawOX + X, DrawOY + DrawViewH - (Y + H), W, H);
-end;
-
 procedure DrawNode(N: TNode; const ParentM: TMat; Alpha: Single; const Clip: TClip);
 var
   M: TMat;
-  A, W, H: Single;
+  A, W, H, T: Single;
   I: Integer;
   C: TClip;
-  X0, Y0, X1, Y1, T: Single;
-
-  procedure Vtx(X, Y: Single);
-  begin
-    glVertex2f(M.A * X + M.C * Y + M.E, M.B * X + M.D * Y + M.F);
-  end;
-
 begin
   if not N.Visible then Exit;
   A := Alpha * N.Opacity;
@@ -412,59 +369,22 @@ begin
         if W = 0 then W := N.Tex.W;
         H := N.H;
         if H = 0 then H := N.Tex.H;
-        if not TexOn then
-        begin
-          glEnable(GL_TEXTURE_2D);
-          TexOn := True;
-        end;
-        if BoundTex <> N.Tex.Id then
-        begin
-          glBindTexture(GL_TEXTURE_2D, N.Tex.Id);
-          BoundTex := N.Tex.Id;
-        end;
-        glColor4f(N.R * A, N.G * A, N.B * A, A);
-        glBegin(GL_QUADS);
-        glTexCoord2f(0, 0);
-        Vtx(0, 0);
-        glTexCoord2f(N.Tex.U, 0);
-        Vtx(W, 0);
-        glTexCoord2f(N.Tex.U, N.Tex.V);
-        Vtx(W, H);
-        glTexCoord2f(0, N.Tex.V);
-        Vtx(0, H);
-        glEnd;
+        Renderer.DrawImage(N.Tex, M, W, H, N.R, N.G, N.B, A);
       end;
     nkRect:
-      begin
-        if TexOn then
-        begin
-          glDisable(GL_TEXTURE_2D);
-          TexOn := False;
-        end;
-        glColor4f(N.R * A, N.G * A, N.B * A, A);
-        glBegin(GL_QUADS);
-        Vtx(0, 0);
-        Vtx(N.W, 0);
-        Vtx(N.W, N.H);
-        Vtx(0, N.H);
-        glEnd;
-      end;
+      Renderer.FillRect(M, N.W, N.H, N.R, N.G, N.B, A);
   end;
   if N.Count = 0 then Exit;
   if N.HasClip then
   begin
     // the clipping rectangle is in this node's own coordinates (the nodes that clip are never rotated)
-    X0 := M.A * N.ClipX + M.E;
-    X1 := M.A * (N.ClipX + N.ClipW) + M.E;
-    Y0 := M.D * N.ClipY + M.F;
-    Y1 := M.D * (N.ClipY + N.ClipH) + M.F;
-    if X1 < X0 then begin T := X0; X0 := X1; X1 := T; end;
-    if Y1 < Y0 then begin T := Y0; Y0 := Y1; Y1 := T; end;
     C.On := True;
-    C.X0 := X0;
-    C.Y0 := Y0;
-    C.X1 := X1;
-    C.Y1 := Y1;
+    C.X0 := M.A * N.ClipX + M.E;
+    C.X1 := M.A * (N.ClipX + N.ClipW) + M.E;
+    C.Y0 := M.D * N.ClipY + M.F;
+    C.Y1 := M.D * (N.ClipY + N.ClipH) + M.F;
+    if C.X1 < C.X0 then begin T := C.X0; C.X0 := C.X1; C.X1 := T; end;
+    if C.Y1 < C.Y0 then begin T := C.Y0; C.Y0 := C.Y1; C.Y1 := T; end;
     if Clip.On then
     begin
       C.X0 := MaxF(C.X0, Clip.X0);
@@ -472,30 +392,20 @@ begin
       C.X1 := Min(C.X1, Clip.X1);
       C.Y1 := Min(C.Y1, Clip.Y1);
     end;
-    ApplyClip(C);
+    Renderer.SetClip(C);
     for I := 0 to N.Count - 1 do DrawNode(N[I], M, A, C);
-    ApplyClip(Clip);
+    Renderer.SetClip(Clip);
   end
   else
     for I := 0 to N.Count - 1 do DrawNode(N[I], M, A, Clip);
 end;
 
-procedure DrawTree(Root: TNode; const View: TMat; ViewH, OriginX, OriginY: Integer);
+procedure DrawTree(Root: TNode; const View: TMat);
 var
   C: TClip;
 begin
-  DrawViewH := ViewH;
-  DrawOX := OriginX;
-  DrawOY := OriginY;
-  BoundTex := 0;
-  TexOn := False;
-  glDisable(GL_TEXTURE_2D);
-  glDisable(GL_SCISSOR_TEST);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);   // premultiplied alpha
-  C.On := False;
+  C := Default(TClip);
   DrawNode(Root, View, 1, C);
-  glDisable(GL_SCISSOR_TEST);
 end;
 
 { ---------- TAnim ---------- }
@@ -711,154 +621,5 @@ begin
   for I := FList.Count - 1 downto 0 do
     if FList[I].Dead then FList.Delete(I);
 end;
-
-{ ---------- TTextureStore ---------- }
-
-constructor TTextureStore.Create;
-begin
-  FMap := TObjectDictionary<string, TTexture>.Create([doOwnsValues]);
-end;
-
-destructor TTextureStore.Destroy;
-begin
-  FMap.Free;
-  inherited;
-end;
-
-procedure TTextureStore.Init;
-var
-  Ver: string;
-begin
-  FReady := True;
-  Ver := string(AnsiString(PAnsiChar(glGetString(GL_VERSION))));
-  // OpenGL 2.0 and later take images of any size; the old software renderer needs powers of two
-  FNPOT := StrToIntDef(Copy(Ver, 1, Pos('.', Ver) - 1), 1) >= 2;
-  @FGenMipmap := wglGetProcAddress('glGenerateMipmap');
-  if not Assigned(FGenMipmap) then @FGenMipmap := wglGetProcAddress('glGenerateMipmapEXT');
-end;
-
-function NextPow2(N: Integer): Integer;
-begin
-  Result := 1;
-  while Result < N do Result := Result shl 1;
-end;
-
-{ Pixels: 32-bit BGRA, premultiplied alpha, top row first }
-function TTextureStore.Upload(W, H: Integer; Pixels: Pointer; Mipmaps: Boolean): TTexture;
-var
-  TW, TH: Integer;
-begin
-  if not FReady then Init;
-  Result := TTexture.Create;
-  Result.W := W;
-  Result.H := H;
-  glGenTextures(1, @Result.Id);
-  glBindTexture(GL_TEXTURE_2D, Result.Id);
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  if FNPOT then
-  begin
-    Result.U := 1;
-    Result.V := 1;
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, W, H, 0, GL_BGRA_EXT, GL_UNSIGNED_BYTE, Pixels);
-    if Mipmaps and Assigned(FGenMipmap) then
-    begin
-      FGenMipmap(GL_TEXTURE_2D);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    end;
-  end
-  else
-  begin
-    TW := NextPow2(W);
-    TH := NextPow2(H);
-    Result.U := W / TW;
-    Result.V := H / TH;
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, TW, TH, 0, GL_BGRA_EXT, GL_UNSIGNED_BYTE, nil);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, W, H, GL_BGRA_EXT, GL_UNSIGNED_BYTE, Pixels);
-  end;
-end;
-
-var
-  WicFactory: IWICImagingFactory;
-
-{ Images are PNG resources named IMG_<NAME>, compiled in from ..\images\ocean (see ReefRes.rc) }
-function TTextureStore.Get(const Name: string): TTexture;
-var
-  RS: TResourceStream;
-  Stream: IStream;
-  Decoder: IWICBitmapDecoder;
-  Frame: IWICBitmapFrameDecode;
-  Conv: IWICFormatConverter;
-  W, H: Cardinal;
-  Buf: TBytes;
-begin
-  if FMap.TryGetValue(Name, Result) then Exit;
-  if WicFactory = nil then
-    OleCheck(CoCreateInstance(CLSID_WICImagingFactory, nil, CLSCTX_INPROC_SERVER, IID_IWICImagingFactory, WicFactory));
-  RS := TResourceStream.Create(HInstance, 'IMG_' + UpperCase(Name), RT_RCDATA);
-  Stream := TStreamAdapter.Create(RS, soOwned);
-  OleCheck(WicFactory.CreateDecoderFromStream(Stream, GUID_NULL, WICDecodeMetadataCacheOnDemand, Decoder));
-  OleCheck(Decoder.GetFrame(0, Frame));
-  OleCheck(WicFactory.CreateFormatConverter(Conv));
-  OleCheck(Conv.Initialize(Frame, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, nil, 0, WICBitmapPaletteTypeCustom));
-  OleCheck(Conv.GetSize(W, H));
-  SetLength(Buf, W * H * 4);
-  OleCheck(Conv.CopyPixels(nil, W * 4, Length(Buf), @Buf[0]));
-  Result := Upload(W, H, @Buf[0], True);
-  FMap.Add(Name, Result);
-end;
-
-function TTextureStore.MakeText(const Text, FontName: string; PixelHeight: Integer; Bold: Boolean): TTexture;
-var
-  Bmp: TBitmap;
-  W, H, X, Y: Integer;
-  P: PCardinal;
-  A: Cardinal;
-  Buf: TArray<Cardinal>;
-begin
-  Bmp := TBitmap.Create;
-  try
-    Bmp.PixelFormat := pf32bit;
-    Bmp.Canvas.Font.Name := FontName;
-    Bmp.Canvas.Font.Height := -PixelHeight;
-    if Bold then Bmp.Canvas.Font.Style := [fsBold];
-    Bmp.Canvas.Font.Quality := fqAntialiased;
-    Bmp.Canvas.Font.Color := clWhite;
-    W := Max(1, Bmp.Canvas.TextWidth(Text) + 4);
-    H := Max(1, Bmp.Canvas.TextHeight(Text));
-    Bmp.SetSize(W, H);
-    Bmp.Canvas.Brush.Color := clBlack;
-    Bmp.Canvas.FillRect(Rect(0, 0, W, H));
-    Bmp.Canvas.Brush.Style := bsClear;
-    Bmp.Canvas.TextOut(2, 0, Text);
-    SetLength(Buf, W * H);
-    for Y := 0 to H - 1 do
-    begin
-      P := Bmp.ScanLine[Y];
-      for X := 0 to W - 1 do
-      begin
-        // white on black: any colour channel is the coverage
-        A := (P^ shr 8) and $FF;
-        Buf[Y * W + X] := (A shl 24) or (A shl 16) or (A shl 8) or A;
-        Inc(P);
-      end;
-    end;
-    Result := Upload(W, H, @Buf[0], False);
-  finally
-    Bmp.Free;
-  end;
-end;
-
-initialization
-  Textures := TTextureStore.Create;
-
-finalization
-  FreeAndNil(Textures);
-  WicFactory := nil;
 
 end.

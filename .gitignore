@@ -25,3 +25,15 @@ delphi/*.dsk
 delphi/*.stat
 delphi/__history/
 delphi/__recovery/
+
+# Delphi FMX app build output
+delphi/fmx/bin/
+delphi/fmx/dcu/
+delphi/fmx/out/
+delphi/fmx/*.res
+delphi/fmx/*.local
+delphi/fmx/*.identcache
+delphi/fmx/*.dsk
+delphi/fmx/*.stat
+delphi/fmx/__history/
+delphi/fmx/__recovery/

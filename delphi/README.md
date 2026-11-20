@@ -4,6 +4,17 @@ The Windows screensaver version of the Roku reef. It uses the same artwork (`..\
 same behaviour: the code is a port of `components\*.brs`, kept close to the original so a change on one
 side is easy to carry to the other.
 
+## Two projects, one reef
+
+| Project | What it is | Draws with |
+|---|---|---|
+| `Reefscape.dproj` (this folder) | The Windows screensaver, `bin\Reefscape.scr` (VCL) | OpenGL |
+| `fmx\ReefscapeFMX.dproj` | The same reef as a FireMonkey app, for Windows and FMX's other platforms | Skia |
+
+Both use the same reef code (`ReefEngine`, `ReefSpecs`, `ReefCreature`, `ReefScene`, `ReefSettings`). Only the
+window and the renderer differ: `ReefRenderGL.pas` here, `fmx\ReefRenderSkia.pas` there. A change to the reef's
+behaviour is made once and both projects get it.
+
 ## Build
 
 - **In the IDE:** open `Reefscape.dproj` in Delphi 13 and build (Win64 or Win32). Run (F9) opens the reef
@@ -22,7 +33,8 @@ how many animals, which animals, and what to do with more than one screen.
 
 | File | What it is |
 |---|---|
-| `ReefEngine.pas` | Small scene graph (groups, images, rectangles) and animation engine, drawn with OpenGL. It mirrors the way Roku SceneGraph works. |
+| `ReefEngine.pas` | Small scene graph (groups, images, rectangles) and animation engine. It mirrors the way Roku SceneGraph works and draws through a renderer. |
+| `ReefRenderGL.pas` | The screensaver's renderer: OpenGL. |
 | `ReefSpecs.pas` | The animals: parts, joints, sizes and speeds (`Specs.brs`). |
 | `ReefCreature.pas` | One animal: building it, swimming, fleeing, the pufferfish (`Creature.brs`). |
 | `ReefScene.pas` | The reef: layers, light, residents, visitors, day and night (`OceanScene.brs`). |
@@ -30,6 +42,7 @@ how many animals, which animals, and what to do with more than one screen.
 | `ConfigForm.pas/.dfm` | The settings dialog. |
 | `SaverMain.pas` | The screensaver shell: `/s`, `/p`, `/c`, the window and the frame loop. |
 | `ReefRes.rc` | Icon, manifest, version and one line per image. Written by `make-rc.ps1`. |
+| `fmx\` | The FMX app: `MainForm`, `SettingsForm`, `ReefRenderSkia.pas`, and `ReefImages.rc` (the images, also written by `make-rc.ps1`). |
 
 ## When the artwork changes
 
@@ -51,6 +64,21 @@ bin\ReefTest.exe /w hour=22 show=puffer
 Options: `hour=` `light=` `clock=` `count=` `off=a,b` `screens=span|same|each|main` `show=puffer|sub|angler`
 `shark=1` `spawn=1` `season=xmas` `diver=1` `fish=1` `shrimp=1` `seed=` `size=1280x720`
 `ff=20` (skip ahead 20 seconds) `quit=5` (close after 5 seconds) `shot=file.png` `log=file.txt`.
+
+## The FMX app
+
+- Build `fmx\ReefscapeFMX.dproj` in the IDE, or run `fmx\build.ps1` (add `-Run` to start it). The result is
+  `fmx\bin\Win64\ReefscapeFMX.exe`.
+- Skia needs its library beside the program on Windows: `sk4d.dll` (`build.ps1` copies it from Delphi's
+  `Redist` folder; running from the IDE finds Delphi's own copy).
+- Keys: F or F11 = full screen, S = settings, Esc = leave full screen or close. Double-click = full screen;
+  right-click (or a long press on a touch screen) = settings.
+- It takes the same test options as the screensaver (`hour=`, `show=`, `ff=`, `shot=`, `quit=` ...), plus
+  `full=1` and `settings=1`. No `/w` is needed: it always runs in a window.
+- Other platforms: add them under Target Platforms in the IDE. On macOS, Android, iOS and Linux it is an app
+  that shows the reef; it is not installed as the system's screensaver. Only the Windows build has been run.
+- On Windows it shares its settings with the screensaver (the same registry key); elsewhere they are kept in
+  `Reefscape.ini` in the user's home folder.
 
 ## Differences from the Roku version
 
