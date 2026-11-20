@@ -27,5 +27,6 @@ Compress-Archive -Path out\fmx\* -DestinationPath $fmx
 Remove-Item out\vcl, out\fmx -Recurse -Force
 
 $sums = Get-ChildItem out\*.zip | ForEach-Object { "{0}  {1}" -f (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower(), $_.Name }
-Set-Content out\SHA256SUMS.txt $sums -Encoding ascii
+# Unix line ends, so that `sha256sum -c` accepts the file too
+[IO.File]::WriteAllText((Join-Path $PSScriptRoot 'out\SHA256SUMS.txt'), (($sums -join "`n") + "`n"))
 Get-ChildItem out | ForEach-Object { "{0,12:N0}  {1}" -f $_.Length, $_.Name }

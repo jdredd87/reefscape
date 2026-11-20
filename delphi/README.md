@@ -6,6 +6,10 @@ to the other.
 
 ![One reef across four monitors](docs/wide-reef.jpg)
 
+Ready-built downloads are on the [Releases page](https://github.com/jdredd87/reefscape/releases). To make a new
+set, run `release\package.ps1 -Version x.y.z` (it builds both flavours and writes the zips and checksums to
+`release\out`), then publish them with `gh release create` and `release\RELEASE-NOTES.md`.
+
 ## Two projects, one reef
 
 | Project | What it is | Draws with |

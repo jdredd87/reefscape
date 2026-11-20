@@ -8,6 +8,8 @@ An animated coral reef screensaver. It comes in three flavours that share the sa
 | **Windows (VCL)** | Windows screensaver, a single `Reefscape.scr` | Delphi 13, VCL, drawn with OpenGL | [`delphi/`](delphi/README.md) |
 | **FMX** | The same reef as a FireMonkey app | Delphi 13, FMX, drawn with Skia | [`delphi/fmx/`](delphi/README.md#the-fmx-app) |
 
+**Download for Windows:** ready-built screensavers are on the [Releases page](https://github.com/jdredd87/reefscape/releases), with install instructions.
+
 The two Delphi flavours fill ultrawide and multiple monitors with one continuous reef:
 
 ![One reef across four monitors](delphi/docs/wide-reef.jpg)
