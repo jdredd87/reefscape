@@ -1,6 +1,7 @@
 # Builds the FMX app from the command line (the same result as building ReefscapeFMX.dproj in the IDE)
 # and puts Skia's library next to it.
 #   .\build.ps1            64-bit Windows release build -> bin\Win64\ReefscapeFMX.exe
+#                          and ReefscapeFMX.scr, the same program as a Windows screensaver
 #   .\build.ps1 -Win32     32-bit build
 #   .\build.ps1 -Run       build, then run it
 param(
@@ -22,5 +23,8 @@ $redist = if ($Win32) { 'win32' } else { 'win64' }
 Copy-Item "$Studio\Redist\$redist\sk4d.dll" "bin\$platform\" -Force
 
 $exe = Get-Item "bin\$platform\ReefscapeFMX.exe"
-Write-Host ("Built {0} ({1:N0} bytes, {2})" -f $exe.FullName, $exe.Length, $platform)
+# The screensaver is the same program under the .scr name (it checks its own name to behave as one).
+# To install it, sk4d.dll must go wherever the .scr goes.
+Copy-Item $exe.FullName "bin\$platform\ReefscapeFMX.scr" -Force
+Write-Host ("Built {0} ({1:N0} bytes, {2}) and ReefscapeFMX.scr" -f $exe.FullName, $exe.Length, $platform)
 if ($Run) { & $exe.FullName }

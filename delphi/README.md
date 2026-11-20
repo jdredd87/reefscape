@@ -73,6 +73,11 @@ Options: `hour=` `light=` `clock=` `count=` `off=a,b` `screens=span|same|each|ma
   `fmx\bin\Win64\ReefscapeFMX.exe`.
 - Skia needs its library beside the program on Windows: `sk4d.dll` (`build.ps1` copies it from Delphi's
   `Redist` folder; running from the IDE finds Delphi's own copy).
+- **As a Windows screensaver:** `build.ps1` also writes `fmx\bin\Win64\ReefscapeFMX.scr`, the same program
+  under the `.scr` name (named that way it opens its settings when started with no switch, as Windows
+  expects). Right-click it and choose Test, Configure or Install. Unlike the VCL screensaver it is two files:
+  keep `sk4d.dll` in the same folder as the `.scr`. A build in the IDE makes only the `.exe`; copy it to
+  `.scr` yourself or run `build.ps1`.
 - Keys: F or F11 = full screen, S = settings, Esc = leave full screen or close. Double-click = full screen;
   right-click (or a long press on a touch screen) = settings.
 - It takes the same command line as the screensaver: `/s` (full screen over every screen, with the same

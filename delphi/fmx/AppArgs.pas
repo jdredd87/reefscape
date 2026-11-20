@@ -5,8 +5,9 @@ unit AppArgs;
     /w            an ordinary window
     /p <hwnd>     the small preview inside the given window (Windows only)
     /c[:<hwnd>]   the settings form only
-  With no switch it opens the reef in a window (the screensaver opens its settings instead; an app that is
-  double-clicked, or started on a phone, should show the reef).
+  With no switch it opens the reef in a window: an app that is double-clicked, or started on a phone, should
+  show the reef. The exception is a copy of the program named .scr (build.ps1 makes one): Windows treats that
+  as a screensaver and expects its settings when it is started with no switch.
   The name=value options are read by MainForm. }
 
 interface
@@ -30,6 +31,8 @@ var
   I, P: Integer;
   Arg, Name: string;
 begin
+  // named .scr, the program is a Windows screensaver: no switch means "configure"
+  if SameText(ExtractFileExt(ParamStr(0)), '.scr') then AppMode := amConfig;
   I := 1;
   while I <= ParamCount do
   begin
