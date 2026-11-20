@@ -1,4 +1,21 @@
-# Reefscape — Roku screensaver
+# Reefscape
+
+An animated coral reef screensaver. It comes in three flavours that share the same artwork and behaviour:
+
+| Flavour | What it is | Built with | Where |
+|---|---|---|---|
+| **Roku** | Screensaver in the Roku Streaming Store | BrightScript / SceneGraph | this folder |
+| **Windows (VCL)** | Windows screensaver, a single `Reefscape.scr` | Delphi 13, VCL, drawn with OpenGL | [`delphi/`](delphi/README.md) |
+| **FMX** | The same reef as a FireMonkey app | Delphi 13, FMX, drawn with Skia | [`delphi/fmx/`](delphi/README.md#the-fmx-app) |
+
+The two Delphi flavours fill ultrawide and multiple monitors with one continuous reef:
+
+![One reef across four monitors](delphi/docs/wide-reef.jpg)
+
+The rest of this page describes the reef and the Roku flavour; the Delphi flavours have their own page,
+[`delphi/README.md`](delphi/README.md).
+
+## The reef
 
 An animated "2.5D" coral reef: depth layers with parallax camera sway, depth haze, sun rays,
 moving caustics on the sand, bubbles, swaying kelp and ~30 animated creatures: reef fish, schools,
@@ -100,10 +117,20 @@ so every image goes through `setImg`, which gives it its size there, and XML pos
 Every sideload leaves the previous install's textures in memory until the Roku restarts, so restart a test
 Roku after many installs before judging texture memory (`.\tools\roku.ps1 mem`).
 To install on another Roku: `.\build.ps1 -RokuIP <ip> -Password <pw>`; the tools take `-RokuIP` too.
-## Windows screensaver (Delphi)
-The `delphi\` folder holds a Windows screensaver version built with Delphi 13: the same artwork and the same
-behaviour, ported from the BrightScript in `components\`. Open `delphi\Reefscape.dproj` in the IDE or run
-`delphi\build.ps1`; the result is `delphi\bin\Reefscape.scr`. See `delphi\README.md`.
-A change to the reef's behaviour should go into both versions: `Specs.brs` ↔ `ReefSpecs.pas`,
-`Creature.brs` ↔ `ReefCreature.pas`, `OceanScene.brs` ↔ `ReefScene.pas`. The Roku package is not affected by
-this folder (the Roku build only packs `manifest`, `source`, `components` and `images`).
+## Windows flavours (Delphi)
+The `delphi\` folder holds two Delphi 13 projects that share one copy of the reef code, ported from the
+BrightScript in `components\`:
+
+- **VCL screensaver** (`delphi\Reefscape.dproj`, or `delphi\build.ps1`): builds `delphi\bin\Reefscape.scr`, a single
+  file drawn with OpenGL. Right-click it and choose Install.
+- **FMX app** (`delphi\fmx\ReefscapeFMX.dproj`, or `delphi\fmx\build.ps1`): the same reef drawn with Skia. It takes
+  the same command line as the screensaver (`/s`, `/w`, `/c`, `/p`) and needs `sk4d.dll` beside it.
+
+Both widen the reef to fit ultrawide and multiple monitors, offer four choices for more than one screen (one wide
+reef, the same reef on each, a different reef on each, main screen only) and show the date and time on the main
+screen only. See [`delphi/README.md`](delphi/README.md).
+
+A change to the reef's behaviour should go into the Roku and the Delphi code: `Specs.brs` ↔ `ReefSpecs.pas`,
+`Creature.brs` ↔ `ReefCreature.pas`, `OceanScene.brs` ↔ `ReefScene.pas` (the VCL and FMX flavours share those
+Pascal units, so that is one change for both). The Roku package is not affected by this folder (the Roku build
+only packs `manifest`, `source`, `components` and `images`).

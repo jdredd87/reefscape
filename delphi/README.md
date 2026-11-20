@@ -1,8 +1,10 @@
-# Reefscape for Windows (Delphi 13)
+# Reefscape in Delphi 13: the VCL and FMX flavours
 
-The Windows screensaver version of the Roku reef. It uses the same artwork (`..\images\ocean`) and the
-same behaviour: the code is a port of `components\*.brs`, kept close to the original so a change on one
-side is easy to carry to the other.
+The Delphi versions of the Roku reef. They use the same artwork (`..\images\ocean`) and the same behaviour:
+the code is a port of `components\*.brs`, kept close to the original so a change on one side is easy to carry
+to the other.
+
+![One reef across four monitors](docs/wide-reef.jpg)
 
 ## Two projects, one reef
 
@@ -15,7 +17,7 @@ Both use the same reef code (`ReefEngine`, `ReefSpecs`, `ReefCreature`, `ReefSce
 window and the renderer differ: `ReefRenderGL.pas` here, `fmx\ReefRenderSkia.pas` there. A change to the reef's
 behaviour is made once and both projects get it.
 
-## Build
+## The VCL screensaver: build
 
 - **In the IDE:** open `Reefscape.dproj` in Delphi 13 and build (Win64 or Win32). Run (F9) opens the reef
   in a test window.
@@ -23,7 +25,7 @@ behaviour is made once and both projects get it.
 
 The result is `bin\Reefscape.scr`, a single file with all the artwork inside it.
 
-## Install
+## The VCL screensaver: install
 
 Right-click `bin\Reefscape.scr` and choose **Install**, or copy it to `C:\Windows\System32` and pick
 Reefscape in *Screen Saver Settings*. **Settings...** there opens the options: time of day, clock,
